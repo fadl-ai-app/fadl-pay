@@ -1,10 +1,95 @@
 from fastapi import APIRouter
 from fastapi.responses import HTMLResponse
+from fastapi import Request
+from payments.transaction_engine import create_transaction, get_transaction
 
 router = APIRouter()
 
 COUNTRY_CURRENCY = {"SD": "SDG", "EG": "EGP", "SA": "SAR", "AE": "AED", "US": "USD"}
 CURRENCY_DATA = {"AED": {"name": "UAE Dirham", "symbol": "د.إ", "decimal_places": 2}, "EGP": {"name": "Egyptian Pound", "symbol": "ج.م", "decimal_places": 2}, "SAR": {"name": "Saudi Riyal", "symbol": "﷼", "decimal_places": 2}, "SDG": {"name": "Sudanese Pound", "symbol": "ج.س", "decimal_places": 2}, "USD": {"name": "United States Dollar", "symbol": "$", "decimal_places": 2}}
+
+
+
+
+@router.post("/pay/create")
+async def create_customer_payment(request: Request):
+
+    data = await request.json()
+
+    country = data.get("country")
+    currency = data.get("currency")
+    amount = data.get("amount")
+    customer_reference = data.get("customer_reference")
+    payment_method = data.get("payment_method")
+
+    if country not in COUNTRY_CURRENCY:
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=400,
+            detail="الدولة غير مدعومة"
+        )
+
+    expected_currency = COUNTRY_CURRENCY[country]
+
+    if currency != expected_currency:
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=400,
+            detail="العملة لا تطابق الدولة"
+        )
+
+    try:
+        amount = int(amount)
+    except (TypeError, ValueError):
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=400,
+            detail="المبلغ غير صحيح"
+        )
+
+    if amount <= 0:
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=400,
+            detail="المبلغ يجب أن يكون أكبر من صفر"
+        )
+
+    if payment_method not in {
+        "bank",
+        "mobile_money",
+        "card",
+    }:
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=400,
+            detail="طريقة الدفع غير مدعومة"
+        )
+
+    # --------------------------------------------------------
+    # Sandbox merchant
+    # --------------------------------------------------------
+
+    MERCHANT_REFERENCE = "MER-007FFD589DE34A66A9ACB5063DD61F51"
+
+    transaction_reference = create_transaction(
+        merchant_reference=MERCHANT_REFERENCE,
+        amount=amount,
+        currency=currency,
+        customer_reference=customer_reference,
+        payment_method=payment_method,
+        idempotency_key=None,
+    )
+
+    transaction = get_transaction(
+        transaction_reference,
+        merchant_reference=MERCHANT_REFERENCE,
+    )
+
+    return {
+        "success": True,
+        "environment": "sandbox",
+        "transaction": transaction,
+    }
 
 
 @router.get("/pay", response_class=HTMLResponse)
@@ -257,7 +342,8 @@ function updateCurrency() {
 }
 
 
-function startPayment() {
+
+async function startPayment() {
 
     const country =
         document.getElementById("country").value;
@@ -267,6 +353,9 @@ function startPayment() {
 
     const amount =
         document.getElementById("amount").value;
+
+    const customerReference =
+        document.getElementById("customer_reference").value.trim();
 
     const paymentMethod =
         document.getElementById("payment_method").value;
@@ -292,10 +381,69 @@ function startPayment() {
         return;
     }
 
-    showResult(
-        "🟢 البيانات صحيحة — الواجهة جاهزة.",
-        true
-    );
+    showResult("⏳ جارٍ إنشاء عملية الدفع في Sandbox...", true);
+
+    try {
+
+        const response = await fetch("/pay/create", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                country: country,
+                currency: currency,
+                amount: Number(amount),
+                customer_reference: customerReference || null,
+                payment_method: paymentMethod
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            showResult(
+                "❌ " + (data.detail || "تعذر إنشاء العملية"),
+                false
+            );
+            return;
+        }
+
+        if (data.success && data.transaction) {
+
+            const transaction =
+                data.transaction;
+
+            showResult(
+                "🟢 تم إنشاء العملية بنجاح\n\n" +
+                "رقم العملية: " +
+                transaction.transaction_reference +
+                "\nالحالة: " +
+                transaction.status +
+                "\nالمبلغ: " +
+                transaction.amount +
+                " " +
+                transaction.currency,
+                true
+            );
+
+        } else {
+
+            showResult(
+                "❌ تعذر إنشاء العملية",
+                false
+            );
+        }
+
+    } catch (error) {
+
+        showResult(
+            "❌ حدث خطأ في الاتصال بالسيرفر",
+            false
+        );
+
+        console.error(error);
+    }
 }
 
 
