@@ -1,0 +1,31 @@
+"""
+Fadl Pay
+Core Backend
+Sandbox / Prototype
+"""
+
+from fastapi import FastAPI
+
+app = FastAPI(
+    title="Fadl Pay API",
+    description="Payment Gateway Infrastructure - Sandbox",
+    version="0.1.0",
+)
+
+
+@app.get("/")
+def root():
+    return {
+        "name": "Fadl Pay",
+        "status": "sandbox",
+        "version": "0.1.0",
+        "message": "Fadl Pay API is running"
+    }
+
+
+@app.get("/health")
+def health():
+    return {
+        "status": "healthy",
+        "environment": "sandbox"
+    }
