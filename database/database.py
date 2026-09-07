@@ -1,3 +1,4 @@
+
 import sqlite3
 from pathlib import Path
 
@@ -58,18 +59,6 @@ def initialize_database():
             event_type TEXT NOT NULL,
             event_data TEXT,
             created_at TEXT NOT NULL
-        )
-    """)
-
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS idempotency_keys (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            merchant_reference TEXT NOT NULL,
-            idempotency_key TEXT NOT NULL,
-            transaction_reference TEXT NOT NULL,
-            request_hash TEXT NOT NULL,
-            created_at TEXT NOT NULL,
-            UNIQUE(merchant_reference, idempotency_key)
         )
     """)
 
