@@ -6,25 +6,10 @@ Sandbox / Prototype
 
 from fastapi import FastAPI
 
-from database.database import initialize_database
-from backend.api import app as api_app
-
-
-# ------------------------------------------------------------
-# Database initialization
-# ------------------------------------------------------------
-
-initialize_database()
-
-
-# ------------------------------------------------------------
-# Main application
-# ------------------------------------------------------------
-
 app = FastAPI(
     title="Fadl Pay API",
     description="Payment Gateway Infrastructure - Sandbox",
-    version="0.2.0",
+    version="0.1.0",
 )
 
 
@@ -33,8 +18,8 @@ def root():
     return {
         "name": "Fadl Pay",
         "status": "sandbox",
-        "version": "0.2.0",
-        "message": "Fadl Pay API is running",
+        "version": "0.1.0",
+        "message": "Fadl Pay API is running"
     }
 
 
@@ -42,9 +27,21 @@ def root():
 def health():
     return {
         "status": "healthy",
-        "environment": "sandbox",
+        "environment": "sandbox"
     }
 
+from backend.api import app as api_app
 
-# API routes
+# Customer Checkout Integration
+from app.customer_checkout import router as customer_checkout_router
+
+# Public customer payment page
+# Must be registered before the root API mount.
+app.include_router(customer_checkout_router)
+
+
+# Merchant Dashboard Integration
+from app.merchant_dashboard import create_dashboard
+
+# Existing API remains mounted at /
 app.mount("/", api_app)
