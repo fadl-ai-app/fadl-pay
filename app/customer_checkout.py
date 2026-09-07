@@ -306,28 +306,7 @@ FADL PAY — Sandbox
 
 <script>
 
-const COUNTRY_CURRENCY = {"SD": "SDG", "EG": "EGP", "SA": "SAR", "AE": "AED", "US": "USD"};
-
-const CURRENCY_DATA = {"AED": {"name": "UAE Dirham", "symbol": "د.إ", "decimal_places": 2}, "EGP": {"name": "Egyptian Pound", "symbol": "ج.م", "decimal_places": 2}, "SAR": {"name": "Saudi Riyal", "symbol": "﷼", "decimal_places": 2}, "SDG": {"name": "Sudanese Pound", "symbol": "ج.س", "decimal_places": 2}, "USD": {"name": "United States Dollar", "symbol": "$", "decimal_places": 2}};
-
-
-function updateCurrency() {
-
-    const country =
-        document.getElementById("country").value;
-
-    const currencyInput =
-        document.getElementById("currency");
-
-    const currencyCode =
-        COUNTRY_CURRENCY[country];
-
-    if (!currencyCode) {
-        currencyInput.value = "";
-        return;
-    }
-
-    const info =
+const info =
         CURRENCY_DATA[currencyCode];
 
     if (info) {
@@ -464,6 +443,57 @@ function showResult(message, success) {
 }
 
 
+const COUNTRY_CURRENCY = {
+    "SD": "SDG",
+    "EG": "EGP",
+    "SA": "SAR",
+    "AE": "AED",
+    "US": "USD"
+};
+
+const CURRENCY_DATA = {
+    "AED": {"name": "UAE Dirham", "symbol": "د.إ"},
+    "EGP": {"name": "Egyptian Pound", "symbol": "ج.م"},
+    "SAR": {"name": "Saudi Riyal", "symbol": "﷼"},
+    "SDG": {"name": "Sudanese Pound", "symbol": "ج.س"},
+    "USD": {"name": "United States Dollar", "symbol": "$"}
+};
+
+function updateCurrency() {
+    const countryInput = document.getElementById("country");
+    const currencyInput = document.getElementById("currency");
+
+    if (!countryInput || !currencyInput) {
+        return;
+    }
+
+    const currencyCode = COUNTRY_CURRENCY[countryInput.value];
+
+    if (!currencyCode) {
+        currencyInput.value = "";
+        return;
+    }
+
+    const info = CURRENCY_DATA[currencyCode];
+
+    if (info) {
+        currencyInput.value =
+            currencyCode + " — " +
+            info.name + " " +
+            info.symbol;
+    } else {
+        currencyInput.value = currencyCode;
+    }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    const countryInput = document.getElementById("country");
+
+    if (countryInput) {
+        countryInput.addEventListener("change", updateCurrency);
+        updateCurrency();
+    }
+});
 </script>
 
 </body>
