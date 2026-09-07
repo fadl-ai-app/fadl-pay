@@ -306,7 +306,30 @@ FADL PAY — Sandbox
 
 <script>
 
-const info =
+function updateCurrency() {
+
+    const countryInput =
+        document.getElementById("country");
+
+    const currencyInput =
+        document.getElementById("currency");
+
+    if (!countryInput || !currencyInput) {
+        return;
+    }
+
+    const country =
+        countryInput.value;
+
+    const currencyCode =
+        COUNTRY_CURRENCY[country];
+
+    if (!currencyCode) {
+        currencyInput.value = "";
+        return;
+    }
+
+    const info =
         CURRENCY_DATA[currencyCode];
 
     if (info) {
