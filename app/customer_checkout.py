@@ -467,7 +467,8 @@ function updateCurrency() {
         return;
     }
 
-    const currencyCode = COUNTRY_CURRENCY[countryInput.value];
+    const country = countryInput.value;
+    const currencyCode = COUNTRY_CURRENCY[country];
 
     if (!currencyCode) {
         currencyInput.value = "";
@@ -476,14 +477,9 @@ function updateCurrency() {
 
     const info = CURRENCY_DATA[currencyCode];
 
-    if (info) {
-        currencyInput.value =
-            currencyCode + " — " +
-            info.name + " " +
-            info.symbol;
-    } else {
-        currencyInput.value = currencyCode;
-    }
+    currencyInput.value = info
+        ? currencyCode + " — " + info.name + " " + info.symbol
+        : currencyCode;
 }
 
 document.addEventListener("DOMContentLoaded", function () {
