@@ -464,51 +464,6 @@ function showResult(message, success) {
 }
 
 
-const COUNTRY_CURRENCY = {
-    "SD": "SDG",
-    "EG": "EGP",
-    "SA": "SAR",
-    "AE": "AED",
-    "US": "USD"
-};
-
-function updateCurrency() {
-    const countrySelect = document.getElementById("country");
-    const currencySelect = document.getElementById("currency");
-
-    if (!countrySelect || !currencySelect) {
-        console.log("FADL PAY: currency elements not found");
-        return;
-    }
-
-    const currency = COUNTRY_CURRENCY[countrySelect.value];
-
-    currencySelect.innerHTML = "";
-
-    if (currency) {
-        const option = document.createElement("option");
-        option.value = currency;
-        option.textContent = currency;
-        option.selected = true;
-        currencySelect.appendChild(option);
-    } else {
-        const option = document.createElement("option");
-        option.value = "";
-        option.textContent = "تحدد تلقائيًا";
-        option.selected = true;
-        currencySelect.appendChild(option);
-    }
-}
-
-document.addEventListener("DOMContentLoaded", function () {
-    const countrySelect = document.getElementById("country");
-
-    if (countrySelect) {
-        countrySelect.addEventListener("change", updateCurrency);
-        updateCurrency();
-    }
-});
-
 </script>
 
 </body>
