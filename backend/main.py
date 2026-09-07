@@ -41,7 +41,6 @@ app.include_router(customer_checkout_router)
 
 
 # Merchant Dashboard Integration
-from app.merchant_dashboard import create_dashboard
 
 # Existing API remains mounted at /
 app.mount("/", api_app)
