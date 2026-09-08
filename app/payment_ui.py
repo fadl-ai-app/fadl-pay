@@ -166,7 +166,7 @@ def submit_payment(
 with gr.Blocks(
     title="FADL PAY",
     theme=gr.themes.Soft(),
-    css=FADL_PAY_COMPACT_UI_CSS,
+    css=FADL_PAY_COMPACT_UI_CSS, css_paths=None,
 ) as demo:
 
     with gr.Column(elem_classes="fadl-pay-shell"):
