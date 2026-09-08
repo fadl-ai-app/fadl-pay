@@ -36,6 +36,12 @@ def submit_payment(
     customer_reference,
     payment_method,
 ):
+    """
+    إنشاء عملية دفع من خلال Backend الداخلي.
+
+    لا يتم كشف API Key للمستخدم.
+    """
+
     if not country:
         return "⚠️ الرجاء اختيار الدولة."
 
@@ -48,15 +54,60 @@ def submit_payment(
     if not payment_method:
         return "⚠️ الرجاء اختيار طريقة الدفع."
 
-    return (
-        "🟢 تم استلام بيانات الدفع بنجاح\n\n"
-        f"🌍 الدولة: {country}\n"
-        f"💱 العملة: {currency}\n"
-        f"💰 المبلغ: {amount}\n"
-        f"👤 المرجع: {customer_reference or 'غير محدد'}\n"
-        f"💳 طريقة الدفع: {payment_method}\n\n"
-        "FADL PAY — Sandbox"
-    )
+    try:
+        amount = int(amount)
+    except (TypeError, ValueError):
+        return "⚠️ المبلغ يجب أن يكون رقمًا صحيحًا."
+
+    if amount <= 0:
+        return "⚠️ المبلغ يجب أن يكون أكبر من صفر."
+
+    # إنشاء المعاملة داخل Backend
+    from backend.api import create_transaction
+
+    # merchant_reference داخلي — لا يظهر للمستخدم
+    import os
+
+    merchant_reference = os.getenv(
+        "FADL_UI_MERCHANT_REFERENCE",
+        ""
+    ).strip()
+
+    if not merchant_reference:
+        return (
+            "⚠️ إعداد التاجر غير مكتمل في بيئة التشغيل.\n\n"
+            "يرجى ضبط FADL_UI_MERCHANT_REFERENCE في Backend."
+        )
+
+    try:
+        transaction_reference = create_transaction(
+            merchant_reference=merchant_reference,
+            amount=amount,
+            currency=currency,
+            customer_reference=customer_reference or None,
+            payment_method=payment_method,
+            idempotency_key=None,
+        )
+
+        return (
+            "🟢 **تم إنشاء عملية الدفع بنجاح**\n\n"
+            f"🌍 الدولة: {country}\n"
+            f"💱 العملة: {currency}\n"
+            f"💰 المبلغ: {amount}\n"
+            f"👤 المرجع: {customer_reference or 'غير محدد'}\n"
+            f"💳 طريقة الدفع: {payment_method}\n\n"
+            f"🔖 **رقم العملية:** `{transaction_reference}`\n\n"
+            "🧪 FADL PAY — Sandbox"
+        )
+
+    except ValueError as error:
+        return f"❌ تعذر إنشاء عملية الدفع: {error}"
+
+    except Exception as error:
+        return (
+            "❌ حدث خطأ أثناء إنشاء عملية الدفع.\n\n"
+            f"التفاصيل: {error}"
+        )
 
 
 with gr.Blocks(
