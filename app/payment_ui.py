@@ -2,6 +2,59 @@
 import gradio as gr
 
 
+FADL_PAY_COMPACT_UI_CSS = """
+/* ==========================================================
+   FADL PAY — Compact Desktop + Responsive Mobile
+   ========================================================== */
+
+/* الحاوية الرئيسية */
+.fadl-pay-shell {
+    width: min(520px, calc(100% - 32px)) !important;
+    max-width: 520px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+/* عنوان الواجهة */
+.fadl-pay-header {
+    text-align: center !important;
+}
+
+/* كرت الدفع */
+.fadl-pay-card {
+    width: 100% !important;
+    max-width: 520px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+/* الشاشات الصغيرة */
+@media (max-width: 700px) {
+    .fadl-pay-shell {
+        width: calc(100% - 20px) !important;
+        max-width: none !important;
+    }
+
+    .fadl-pay-card {
+        max-width: none !important;
+    }
+}
+
+/* الشاشات الكبيرة جدًا */
+@media (min-width: 1200px) {
+    .fadl-pay-shell {
+        width: 520px !important;
+        max-width: 520px !important;
+    }
+
+    .fadl-pay-card {
+        max-width: 520px !important;
+    }
+}
+"""
+
+
+
 # ============================================================
 # 💳 FADL PAY — Payment UI
 # ============================================================
@@ -113,59 +166,64 @@ def submit_payment(
 with gr.Blocks(
     title="FADL PAY",
     theme=gr.themes.Soft(),
+    css=FADL_PAY_COMPACT_UI_CSS,
 ) as demo:
 
-    gr.Markdown(
-        """
-        # 💳 FADL PAY
+    with gr.Column(elem_classes="fadl-pay-shell"):
 
-        ### ادفع بسهولة وأمان
+        gr.Markdown(
+            """
+            # 💳 FADL PAY
 
-        **FADL PAY — Sandbox**
-        """
-    )
+            ### ادفع بسهولة وأمان
 
-    with gr.Group():
-
-        country = gr.Dropdown(
-            choices=COUNTRIES,
-            label="🌍 الدولة",
-            value=None,
-            interactive=True,
+            **FADL PAY — Sandbox**
+            """,
+            elem_classes="fadl-pay-header",
         )
 
-        # 🔥 العملة أصبحت حقلًا مستقلًا وواضحًا
-        currency = gr.Dropdown(
-            choices=CURRENCIES,
-            label="💱 العملة",
-            value=None,
-            interactive=True,
-        )
+        with gr.Group(elem_classes="fadl-pay-card"):
 
-        amount = gr.Number(
-            label="💰 المبلغ",
-            minimum=1,
-            precision=0,
-            interactive=True,
-        )
+            country = gr.Dropdown(
+                choices=COUNTRIES,
+                label="🌍 الدولة",
+                value=None,
+                interactive=True,
+            )
 
-        customer_reference = gr.Textbox(
-            label="👤 رقم / مرجع العميل",
-            placeholder="أدخل رقم أو مرجع العميل",
-            interactive=True,
-        )
+            # 🔥 العملة أصبحت حقلًا مستقلًا وواضحًا
+            currency = gr.Dropdown(
+                choices=CURRENCIES,
+                label="💱 العملة",
+                value=None,
+                interactive=True,
+            )
 
-        payment_method = gr.Dropdown(
-            choices=PAYMENT_METHODS,
-            label="💳 طريقة الدفع",
-            value=None,
-            interactive=True,
-        )
+            amount = gr.Number(
+                label="💰 المبلغ",
+                minimum=1,
+                precision=0,
+                interactive=True,
+            )
 
-        pay_button = gr.Button(
-            "💳 ادفع الآن",
-            variant="primary",
-        )
+            customer_reference = gr.Textbox(
+                label="👤 رقم / مرجع العميل",
+                placeholder="أدخل رقم أو مرجع العميل",
+                interactive=True,
+            )
+
+            payment_method = gr.Dropdown(
+                choices=PAYMENT_METHODS,
+                label="💳 طريقة الدفع",
+                value=None,
+                interactive=True,
+            )
+
+            pay_button = gr.Button(
+                "💳 ادفع الآن",
+                variant="primary",
+            )
+
 
     result = gr.Markdown()
 
