@@ -1,0 +1,42 @@
+
+/* FADL PAY — Compact Desktop + Responsive Mobile */
+
+.fadl-pay-shell {
+    width: min(520px, calc(100% - 32px)) !important;
+    max-width: 520px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+.fadl-pay-header {
+    text-align: center !important;
+}
+
+.fadl-pay-card {
+    width: 100% !important;
+    max-width: 520px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+@media (max-width: 700px) {
+    .fadl-pay-shell {
+        width: calc(100% - 20px) !important;
+        max-width: none !important;
+    }
+
+    .fadl-pay-card {
+        max-width: none !important;
+    }
+}
+
+@media (min-width: 1200px) {
+    .fadl-pay-shell {
+        width: 520px !important;
+        max-width: 520px !important;
+    }
+
+    .fadl-pay-card {
+        max-width: 520px !important;
+    }
+}

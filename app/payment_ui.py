@@ -1,3 +1,4 @@
+from pathlib import Path
 
 import gradio as gr
 
@@ -166,7 +167,7 @@ def submit_payment(
 with gr.Blocks(
     title="FADL PAY",
     theme=gr.themes.Soft(),
-    css=FADL_PAY_COMPACT_UI_CSS, css_paths=None,
+    css_paths=str(Path(__file__).with_name("fadl_pay.css")),
 ) as demo:
 
     with gr.Column(elem_classes="fadl-pay-shell"):
