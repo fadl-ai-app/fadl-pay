@@ -11,6 +11,7 @@ from fastapi import FastAPI
 from database.database import initialize_database
 from backend.api import app as api_app
 from app.payment_ui import demo
+from app.financial_admin_ui import financial_admin_demo
 
 
 initialize_database()
@@ -55,4 +56,11 @@ app = gr.mount_gradio_app(
     app,
     demo,
     path="/",
+)
+
+# FINANCIAL ADMIN
+app = gr.mount_gradio_app(
+    app,
+    financial_admin_demo,
+    path="/admin",
 )
