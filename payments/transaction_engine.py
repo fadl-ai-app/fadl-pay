@@ -308,6 +308,68 @@ def get_transaction(transaction_reference, merchant_reference=None):
 
     return dict(row)
 
+
+def _post_ledger_entry(
+    connection,
+    transaction_reference,
+    merchant_reference,
+    entry_type,
+    amount,
+    currency,
+    description=None,
+):
+    """
+    Create exactly one ledger entry for a transaction + entry type.
+    """
+
+    cursor = connection.cursor()
+
+    cursor.execute(
+        """
+        SELECT id
+        FROM ledger_entries
+        WHERE transaction_reference = ?
+          AND entry_type = ?
+        ORDER BY id
+        LIMIT 1
+        """,
+        (
+            transaction_reference,
+            entry_type,
+        ),
+    )
+
+    existing = cursor.fetchone()
+
+    if existing is not None:
+        return existing["id"]
+
+    cursor.execute(
+        """
+        INSERT INTO ledger_entries (
+            transaction_reference,
+            merchant_reference,
+            entry_type,
+            amount,
+            currency,
+            description,
+            created_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            transaction_reference,
+            merchant_reference,
+            entry_type,
+            amount,
+            currency,
+            description,
+            utc_now(),
+        ),
+    )
+
+    return cursor.lastrowid
+
 def update_transaction_status(transaction_reference, new_status):
     if new_status not in VALID_STATUSES:
         raise ValueError(
@@ -319,7 +381,7 @@ def update_transaction_status(transaction_reference, new_status):
 
     cursor.execute(
         """
-        SELECT merchant_reference, status
+        SELECT merchant_reference, status, amount, currency
         FROM transactions
         WHERE transaction_reference = ?
         """,
@@ -334,6 +396,8 @@ def update_transaction_status(transaction_reference, new_status):
 
     merchant_reference = row["merchant_reference"]
     old_status = row["status"]
+    amount = row["amount"]
+    currency = row["currency"]
 
     allowed_next_statuses = ALLOWED_TRANSITIONS.get(old_status, set())
 
@@ -383,6 +447,30 @@ def update_transaction_status(transaction_reference, new_status):
 
     event_id = cursor.lastrowid
 
+    ledger_entry_id = None
+
+    if new_status == "paid":
+        ledger_entry_id = _post_ledger_entry(
+            connection=connection,
+            transaction_reference=transaction_reference,
+            merchant_reference=merchant_reference,
+            entry_type="CREDIT",
+            amount=amount,
+            currency=currency,
+            description="Payment credited",
+        )
+
+    elif new_status == "refunded":
+        ledger_entry_id = _post_ledger_entry(
+            connection=connection,
+            transaction_reference=transaction_reference,
+            merchant_reference=merchant_reference,
+            entry_type="DEBIT_REFUND",
+            amount=amount,
+            currency=currency,
+            description="Payment refunded",
+        )
+
     connection.commit()
     connection.close()
 
@@ -415,5 +503,6 @@ def update_transaction_status(transaction_reference, new_status):
         "old_status": old_status,
         "new_status": new_status,
         "event_id": event_id,
+        "ledger_entry_id": ledger_entry_id,
         "webhook": webhook_result,
     }

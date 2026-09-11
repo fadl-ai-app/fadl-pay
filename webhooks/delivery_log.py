@@ -2,7 +2,10 @@ from datetime import datetime, timezone
 import json
 import sqlite3
 
-DB_PATH = "/content/Fadl_Pay/database/fadl_pay.db"
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+DB_PATH = str(PROJECT_ROOT / "database" / "fadl_pay.db")
 
 
 def utc_now():

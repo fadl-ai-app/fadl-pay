@@ -6,7 +6,10 @@ from webhooks.signature import generate_webhook_secret
 from webhooks.ssrf import validate_webhook_url
 
 
-DB_PATH = "/content/Fadl_Pay/database/fadl_pay.db"
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+DB_PATH = str(PROJECT_ROOT / "database" / "fadl_pay.db")
 
 VALID_STATUSES = {
     "active",

@@ -3,7 +3,10 @@ import sqlite3
 from webhooks.endpoint_manager import get_webhook_endpoint
 
 
-DB_PATH = "/content/Fadl_Pay/database/fadl_pay.db"
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+DB_PATH = str(PROJECT_ROOT / "database" / "fadl_pay.db")
 
 
 def get_merchant_webhook_endpoint(
