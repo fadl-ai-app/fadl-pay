@@ -276,6 +276,37 @@ body {
     }
 }
 
+
+
+/* ==========================================================
+   💳 FADL PAY — Gradio Dropdown SVG visual isolation
+   ========================================================== */
+
+/* Gradio 6 renders its own dropdown icon internally.
+   Keep the icon, but prevent accidental inherited text styling. */
+
+.fadl-pay-card select,
+.fadl-pay-card input[role="listbox"] {
+    color: #222222 !important;
+    font-size: 15px !important;
+    line-height: 1.4 !important;
+}
+
+/* Do NOT hide SVG globally.
+   Only prevent SVG elements from behaving like text. */
+
+.fadl-pay-card select + svg,
+.fadl-pay-card input[role="listbox"] + svg {
+    display: block !important;
+    pointer-events: none !important;
+}
+
+
+
+/* ==========================================================
+   💳 FADL PAY — Hide accidental visible "svg" text only
+   ========================================================== */
+
 """
 
 
@@ -465,6 +496,46 @@ FADL_AUTO_CURRENCY_CSS = r"""
         padding: 12px 14px;
     }
 }
+
+"""
+
+FADL_SVG_TEXT_FIX_JS = r"""
+
+<script>
+(function () {
+
+    function removeVisibleSvgText() {
+        const elements = document.querySelectorAll("*");
+
+        for (const el of elements) {
+            if (!el || !el.children) continue;
+
+            const text = (el.textContent || "").trim();
+
+            if (
+                text === "svg" &&
+                el.children.length === 0
+            ) {
+                el.style.display = "none";
+            }
+        }
+    }
+
+    removeVisibleSvgText();
+
+    const observer = new MutationObserver(function () {
+        removeVisibleSvgText();
+    });
+
+    observer.observe(document.documentElement, {
+        childList: true,
+        subtree: true
+    });
+
+    setInterval(removeVisibleSvgText, 1000);
+
+})();
+</script>
 
 """
 
@@ -781,7 +852,7 @@ def submit_payment(
 
     merchant_reference = os.getenv(
         "FADL_UI_MERCHANT_REFERENCE",
-        "MER-007FFD589DE34A66A9ACB5063DD61F51"
+        ""
     ).strip()
 
     if not merchant_reference:
@@ -878,6 +949,8 @@ with gr.Blocks(
                 label="💳 طريقة الدفع",
                 interactive=True,
             )
+
+            gr.HTML(FADL_SVG_TEXT_FIX_JS)
 
             pay_button = gr.Button(
                 "💳 ادفع الآن",
