@@ -85,7 +85,15 @@ def initialize_database():
 
     cursor.execute("CREATE TABLE IF NOT EXISTS webhook_endpoints (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    merchant_reference TEXT NOT NULL,\n    webhook_url TEXT NOT NULL,\n    webhook_secret TEXT NOT NULL,\n    status TEXT NOT NULL DEFAULT 'active',\n    created_at TEXT NOT NULL,\n    updated_at TEXT NOT NULL\n)")
 
+    # --------------------------------------------------------
+    # Seed verified FADL PAY reference/master data
+    # --------------------------------------------------------
+    from database.reference_seed import seed_reference_data
+
+    seed_reference_data(connection)
+
     connection.commit()
+
     connection.close()
 
 
