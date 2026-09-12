@@ -781,7 +781,7 @@ def submit_payment(
 
     merchant_reference = os.getenv(
         "FADL_UI_MERCHANT_REFERENCE",
-        ""
+        "MER-007FFD589DE34A66A9ACB5063DD61F51"
     ).strip()
 
     if not merchant_reference:
