@@ -7,9 +7,8 @@ import sqlite3
 from pathlib import Path
 
 DB_PATH = (
-    Path("/content/drive/MyDrive/FADL_PAY_SAVED")
-    / "FADL_PAY_NEW_UI_SAFE_2026-09-08_06-02-50"
-    / "WORKING_DATABASE"
+    Path(__file__).resolve().parent.parent
+    / "database"
     / "fadl_pay.db"
 )
 
