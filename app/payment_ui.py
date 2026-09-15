@@ -613,6 +613,12 @@ with gr.Blocks(
                 <div class="fadl-secure">
                     🔒 دفع آمن • FADL PAY
                 </div>
+
+                <div class="fadl-admin-link">
+                    <a href="/admin/" target="_self">
+                        🔐 الإدارة المالية
+                    </a>
+                </div>
                 """
             )
 
