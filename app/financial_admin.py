@@ -138,9 +138,15 @@ def get_financial_summary():
     }
 
 
-def search_transactions(query="", limit=100):
+def search_transactions(
+    query="",
+    status="",
+    payment_method="",
+    currency="",
+    limit=100,
+):
     """
-    البحث في سجل المعاملات فقط.
+    البحث والفلترة في سجل المعاملات فقط.
     لا تقوم هذه الوحدة بتعديل قاعدة البيانات.
     """
 
@@ -151,51 +157,71 @@ def search_transactions(query="", limit=100):
     connection.row_factory = sqlite3.Row
 
     query = str(query or "").strip()
+    status = str(status or "").strip()
+    payment_method = str(payment_method or "").strip()
+    currency = str(currency or "").strip()
+
+    conditions = []
+    parameters = []
 
     if query:
-        rows = connection.execute("""
-            SELECT
-                transaction_reference,
-                merchant_reference,
-                customer_reference,
-                amount,
-                currency,
-                payment_method,
-                status,
-                created_at
-            FROM transactions
-            WHERE
+        conditions.append("""
+            (
                 transaction_reference LIKE ?
                 OR merchant_reference LIKE ?
                 OR customer_reference LIKE ?
-            ORDER BY created_at DESC
-            LIMIT ?
-        """, (
-            f"%{query}%",
-            f"%{query}%",
-            f"%{query}%",
-            int(limit),
-        )).fetchall()
-    else:
-        rows = connection.execute("""
-            SELECT
-                transaction_reference,
-                merchant_reference,
-                customer_reference,
-                amount,
-                currency,
-                payment_method,
-                status,
-                created_at
-            FROM transactions
-            ORDER BY created_at DESC
-            LIMIT ?
-        """, (int(limit),)).fetchall()
+            )
+        """)
+        like_query = f"%{query}%"
+        parameters.extend([
+            like_query,
+            like_query,
+            like_query,
+        ])
+
+    if status:
+        conditions.append("status = ?")
+        parameters.append(status)
+
+    if payment_method:
+        conditions.append("payment_method = ?")
+        parameters.append(payment_method)
+
+    if currency:
+        conditions.append("currency = ?")
+        parameters.append(currency)
+
+    where_clause = ""
+
+    if conditions:
+        where_clause = "WHERE " + " AND ".join(conditions)
+
+    sql = f"""
+        SELECT
+            transaction_reference,
+            merchant_reference,
+            customer_reference,
+            amount,
+            currency,
+            payment_method,
+            status,
+            created_at
+        FROM transactions
+        {where_clause}
+        ORDER BY created_at DESC
+        LIMIT ?
+    """
+
+    parameters.append(int(limit))
+
+    rows = connection.execute(
+        sql,
+        parameters,
+    ).fetchall()
 
     connection.close()
 
     return [dict(row) for row in rows]
-
 
 def get_transaction_list(limit=100):
     """
