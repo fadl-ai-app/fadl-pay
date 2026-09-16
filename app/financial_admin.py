@@ -6,12 +6,7 @@
 import sqlite3
 from pathlib import Path
 
-DB_PATH = (
-    Path("/content/drive/MyDrive/FADL_PAY_SAVED")
-    / "FADL_PAY_NEW_UI_SAFE_2026-09-08_06-02-50"
-    / "WORKING_DATABASE"
-    / "fadl_pay.db"
-)
+from database.database import DB_PATH
 
 
 def get_financial_summary():
