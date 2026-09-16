@@ -59,6 +59,17 @@ app.include_router(
 
 
 # ============================================================
+# FINANCIAL ADMIN
+# يجب أن يسبق root حتى لا تلتقط واجهة الدفع مسار /admin
+# ============================================================
+
+app = gr.mount_gradio_app(
+    app,
+    financial_admin_demo,
+    path="/admin",
+)
+
+# ============================================================
 # PAYMENT UI
 # الصفحة الرئيسية /
 # ============================================================
@@ -67,11 +78,4 @@ app = gr.mount_gradio_app(
     app,
     demo,
     path="/",
-)
-
-# FINANCIAL ADMIN
-app = gr.mount_gradio_app(
-    app,
-    financial_admin_demo,
-    path="/admin",
 )
