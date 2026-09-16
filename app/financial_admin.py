@@ -132,3 +132,94 @@ def get_financial_summary():
         "currencies": [dict(row) for row in currencies],
         "merchants": [dict(row) for row in merchants],
     }
+
+
+def search_transactions(query="", limit=100):
+    """
+    البحث في سجل المعاملات فقط.
+    لا تقوم هذه الوحدة بتعديل قاعدة البيانات.
+    """
+
+    connection = sqlite3.connect(
+        f"file:{DB_PATH}?mode=ro",
+        uri=True
+    )
+    connection.row_factory = sqlite3.Row
+
+    query = str(query or "").strip()
+
+    if query:
+        rows = connection.execute("""
+            SELECT
+                transaction_reference,
+                merchant_reference,
+                customer_reference,
+                amount,
+                currency,
+                payment_method,
+                status,
+                created_at
+            FROM transactions
+            WHERE
+                transaction_reference LIKE ?
+                OR merchant_reference LIKE ?
+                OR customer_reference LIKE ?
+            ORDER BY created_at DESC
+            LIMIT ?
+        """, (
+            f"%{query}%",
+            f"%{query}%",
+            f"%{query}%",
+            int(limit),
+        )).fetchall()
+    else:
+        rows = connection.execute("""
+            SELECT
+                transaction_reference,
+                merchant_reference,
+                customer_reference,
+                amount,
+                currency,
+                payment_method,
+                status,
+                created_at
+            FROM transactions
+            ORDER BY created_at DESC
+            LIMIT ?
+        """, (int(limit),)).fetchall()
+
+    connection.close()
+
+    return [dict(row) for row in rows]
+
+
+def get_transaction_list(limit=100):
+    """
+    قراءة سجل المعاملات فقط.
+    لا تقوم هذه الوحدة بتعديل قاعدة البيانات.
+    """
+
+    connection = sqlite3.connect(
+        f"file:{DB_PATH}?mode=ro",
+        uri=True
+    )
+    connection.row_factory = sqlite3.Row
+
+    rows = connection.execute("""
+        SELECT
+            transaction_reference,
+            merchant_reference,
+            customer_reference,
+            amount,
+            currency,
+            payment_method,
+            status,
+            created_at
+        FROM transactions
+        ORDER BY created_at DESC
+        LIMIT ?
+    """, (int(limit),)).fetchall()
+
+    connection.close()
+
+    return [dict(row) for row in rows]

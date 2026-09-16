@@ -1,282 +1,7 @@
 
 
 
-CUSTOM_CSS = """
-/* -----------------------------------------------------------
-   الصفحة بالكامل
------------------------------------------------------------ */
-
-html,
-body,
-.gradio-container {
-    margin: 0 !important;
-    padding: 0 !important;
-    min-height: 100vh !important;
-}
-
-.gradio-container {
-    background:
-        radial-gradient(
-            circle at 50% 20%,
-            #f3f3f3 0%,
-            #e8e8e8 38%,
-            #dcdcdc 100%
-        ) !important;
-}
-
-
-/* -----------------------------------------------------------
-   إخفاء المساحات الافتراضية
------------------------------------------------------------ */
-
-.gradio-container > .main {
-    padding: 0 !important;
-}
-
-.contain {
-    max-width: none !important;
-}
-
-
-/* -----------------------------------------------------------
-   الحاوية الرئيسية
------------------------------------------------------------ */
-
-.fadl-page {
-    min-height: 100vh;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-sizing: border-box;
-    padding: 40px 24px;
-}
-
-
-/* -----------------------------------------------------------
-   كرت الدفع
------------------------------------------------------------ */
-
-.fadl-card {
-    width: min(560px, 100%);
-    box-sizing: border-box;
-
-    background:
-        linear-gradient(
-            145deg,
-            #eeeeee 0%,
-            #d9d9d9 45%,
-            #cfcfcf 100%
-        );
-
-    border: 1px solid rgba(255,255,255,0.85);
-    border-radius: 28px;
-
-    padding: 34px;
-
-    box-shadow:
-        0 30px 70px rgba(0,0,0,0.16),
-        0 8px 24px rgba(0,0,0,0.08),
-        inset 0 1px 0 rgba(255,255,255,0.9);
-
-    backdrop-filter: blur(10px);
-}
-
-
-/* -----------------------------------------------------------
-   رأس الكرت
------------------------------------------------------------ */
-
-.fadl-brand {
-    text-align: center;
-    margin-bottom: 6px;
-}
-
-.fadl-brand h1 {
-    margin: 0;
-    font-size: 32px;
-    font-weight: 800;
-    letter-spacing: 0.5px;
-    color: #202020;
-}
-
-.fadl-brand .pay {
-    color: #555555;
-}
-
-.fadl-subtitle {
-    text-align: center;
-    color: #666666;
-    font-size: 14px;
-    margin-bottom: 28px;
-}
-
-
-/* -----------------------------------------------------------
-   العناوين
------------------------------------------------------------ */
-
-.fadl-card label span {
-    color: #303030 !important;
-    font-weight: 700 !important;
-}
-
-
-/* -----------------------------------------------------------
-   الحقول
------------------------------------------------------------ */
-
-.fadl-card input,
-.fadl-card textarea,
-.fadl-card select {
-    background: rgba(255,255,255,0.82) !important;
-    border: 1px solid rgba(0,0,0,0.10) !important;
-    border-radius: 14px !important;
-    color: #222222 !important;
-    min-height: 48px !important;
-    box-shadow:
-        inset 0 1px 2px rgba(0,0,0,0.04) !important;
-}
-
-.fadl-card input:focus,
-.fadl-card textarea:focus {
-    border-color: #777777 !important;
-    box-shadow:
-        0 0 0 2px rgba(80,80,80,0.12) !important;
-}
-
-
-/* -----------------------------------------------------------
-   زر الدفع
------------------------------------------------------------ */
-
-.fadl-pay-btn {
-    width: 100% !important;
-    min-height: 54px !important;
-
-    margin-top: 12px !important;
-
-    border: none !important;
-    border-radius: 16px !important;
-
-    background:
-        linear-gradient(
-            135deg,
-            #242424,
-            #414141
-        ) !important;
-
-    color: white !important;
-
-    font-size: 17px !important;
-    font-weight: 800 !important;
-
-    box-shadow:
-        0 12px 24px rgba(0,0,0,0.20) !important;
-
-    transition:
-        transform 0.15s ease,
-        box-shadow 0.15s ease !important;
-}
-
-.fadl-pay-btn:hover {
-    transform: translateY(-2px);
-    box-shadow:
-        0 16px 30px rgba(0,0,0,0.25) !important;
-}
-
-
-/* -----------------------------------------------------------
-   الأمان
------------------------------------------------------------ */
-
-.fadl-secure {
-    text-align: center;
-    margin-top: 20px;
-    color: #666666;
-    font-size: 12px;
-}
-
-
-/* -----------------------------------------------------------
-   الهاتف
------------------------------------------------------------ */
-
-@media (max-width: 700px) {
-
-    .fadl-page {
-        align-items: flex-start;
-        padding: 22px 14px;
-    }
-
-    .fadl-card {
-        width: 100%;
-        padding: 24px 18px;
-        border-radius: 22px;
-    }
-
-    .fadl-brand h1 {
-        font-size: 27px;
-    }
-
-    .fadl-subtitle {
-        margin-bottom: 20px;
-    }
-}
-
-/* FADL PAY — PRESERVED PRODUCTION CSS */
-
-body {
-    background: #f5f5f5 !important;
-}
-
-.gradio-container {
-    max-width: 100% !important;
-    padding: 0 !important;
-}
-
-#fadl-pay-card {
-    width: 390px !important;
-    max-width: calc(100vw - 32px) !important;
-    margin: 55px auto !important;
-    padding: 28px 26px !important;
-    background: white !important;
-    border-radius: 18px !important;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.10) !important;
-}
-
-#fadl-pay-card h1,
-#fadl-pay-card h3 {
-    text-align: center !important;
-}
-
-#fadl-pay-card h1 {
-    margin-top: 0 !important;
-    margin-bottom: 5px !important;
-}
-
-#fadl-pay-card h3 {
-    margin-top: 0 !important;
-    margin-bottom: 12px !important;
-}
-
-#fadl-pay-card button {
-    width: 100% !important;
-    min-height: 46px !important;
-    border-radius: 10px !important;
-}
-
-@media (max-width: 600px) {
-    #fadl-pay-card {
-        width: calc(100vw - 24px) !important;
-        max-width: none !important;
-        margin: 12px auto !important;
-        padding: 22px 16px !important;
-        border-radius: 16px !important;
-    }
-}
-
-"""
+CUSTOM_CSS = '\n\n/* ==========================================================\n   FADL PAY — ULTRA COMPACT\n   ========================================================== */\n\n\n\n/* إزالة الفراغات الكبيرة التي تضيفها Gradio */\n\n\n/* عناصر الإدخال */\n\n\n/* Labels */\n\n\n/* العناوين */\n\n\n/* النصوص */\n\n\n/* زر الدفع */\n\n\n/* الفوتر */\n\n\n/* منع الفراغات الرأسية الإضافية */\n\n\n/* Mobile */\n@media (max-width: 600px) {\n    .gradio-container {\n        padding: 5px !important;\n    }\n\n    \n\n    \n\n    \n}\n\n\n/* ==========================================================\n   FADL PAY — COMPACT HEIGHT OVERRIDE\n   الشكل فقط — لا وظائف\n   ========================================================== */\n\nbody,\n.gradio-container {\n    min-height: 100vh !important;\n}\n\n/* الكرت */\n\n\n/* تقليل المسافات العامة */\n\n\n/* العناوين */\n\n\n/* النصوص */\n\n\n/* Labels */\n\n\n/* الحقول */\n\n\n/* تقليل المساحة داخل مجموعات Gradio */\n\n\n/* زر الدفع */\n\n\n/* الفوتر */\n\n\n/* الموبايل */\n@media (max-width: 600px) {\n    .gradio-container {\n        padding: 8px !important;\n    }\n\n    \n\n    \n\n    \n}\n\n/* -----------------------------------------------------------\n   الصفحة بالكامل\n----------------------------------------------------------- */\n\nhtml,\nbody,\n.gradio-container {\n    margin: 0 !important;\n    padding: 0 !important;\n    min-height: 100vh !important;\n}\n\n.gradio-container {\n    background:\n        radial-gradient(\n            circle at 50% 20%,\n            #f3f3f3 0%,\n            #e8e8e8 38%,\n            #dcdcdc 100%\n        ) !important;\n}\n\n\n/* -----------------------------------------------------------\n   إخفاء المساحات الافتراضية\n----------------------------------------------------------- */\n\n.gradio-container > .main {\n    padding: 0 !important;\n}\n\n.contain {\n    max-width: none !important;\n}\n\n\n/* -----------------------------------------------------------\n   الحاوية الرئيسية\n----------------------------------------------------------- */\n\n\n\n\n/* -----------------------------------------------------------\n   كرت الدفع\n----------------------------------------------------------- */\n\n\n\n\n/* -----------------------------------------------------------\n   رأس الكرت\n----------------------------------------------------------- */\n\n.fadl-brand {\n    text-align: center;\n    margin-bottom: 6px;\n}\n\n.fadl-brand h1 {\n    margin: 0;\n    font-size: 32px;\n    font-weight: 800;\n    letter-spacing: 0.5px;\n    color: #202020;\n}\n\n.fadl-brand .pay {\n    color: #555555;\n}\n\n.fadl-subtitle {\n    text-align: center;\n    color: #666666;\n    font-size: 14px;\n    margin-bottom: 28px;\n}\n\n\n/* -----------------------------------------------------------\n   العناوين\n----------------------------------------------------------- */\n\n\n\n\n/* -----------------------------------------------------------\n   الحقول\n----------------------------------------------------------- */\n\n\n\n\n\n\n/* -----------------------------------------------------------\n   زر الدفع\n----------------------------------------------------------- */\n\n.fadl-pay-btn {\n    width: 100% !important;\n    min-height: 54px !important;\n\n    margin-top: 12px !important;\n\n    border: none !important;\n    border-radius: 16px !important;\n\n    background:\n        linear-gradient(\n            135deg,\n            #242424,\n            #414141\n        ) !important;\n\n    color: white !important;\n\n    font-size: 17px !important;\n    font-weight: 800 !important;\n\n    box-shadow:\n        0 12px 24px rgba(0,0,0,0.20) !important;\n\n    transition:\n        transform 0.15s ease,\n        box-shadow 0.15s ease !important;\n}\n\n.fadl-pay-btn:hover {\n    transform: translateY(-2px);\n    box-shadow:\n        0 16px 30px rgba(0,0,0,0.25) !important;\n}\n\n\n/* -----------------------------------------------------------\n   الأمان\n----------------------------------------------------------- */\n\n.fadl-secure {\n    text-align: center;\n    margin-top: 20px;\n    color: #666666;\n    font-size: 12px;\n}\n\n\n/* -----------------------------------------------------------\n   الهاتف\n----------------------------------------------------------- */\n\n@media (max-width: 700px) {\n\n    \n\n    \n\n    .fadl-brand h1 {\n        font-size: 27px;\n    }\n\n    .fadl-subtitle {\n        margin-bottom: 20px;\n    }\n}\n\n/* FADL PAY — PRESERVED PRODUCTION CSS */\n\nbody {\n    background: #f5f5f5 !important;\n}\n\n.gradio-container {\n    max-width: 100% !important;\n    padding: 0 !important;\n}\n\n\n\n\n\n\n\n\n\n\n\n@media (max-width: 600px) {\n    \n}\n\n\n\n/* ==========================================================\n   💳 FADL PAY — Gradio Dropdown SVG visual isolation\n   ========================================================== */\n\n/* Gradio 6 renders its own dropdown icon internally.\n   Keep the icon, but prevent accidental inherited text styling. */\n\n/* Do NOT hide SVG globally.\n   Only prevent SVG elements from behaving like text. */\n\n\n\n/* ==========================================================\n   💳 FADL PAY — Hide accidental visible "svg" text only\n   ========================================================== */\n\n\n\n/* ============================================================\n   FADL PAY — FINAL COMPACT CARD OVERRIDE\n   CSS ONLY\n   ============================================================ */\n\nbody,\n.gradio-container {\n    background: #17191c !important;\n}\n\n.gradio-container {\n    width: 100% !important;\n    max-width: 100% !important;\n    min-height: 100vh !important;\n    margin: 0 !important;\n    padding: 28px 16px !important;\n    box-sizing: border-box !important;\n}\n\n/* Compact centered payment card */\n\n\n/* Compact vertical spacing */\n\n\n/* Inputs */\n\n\n/* Labels */\n\n\n/* Button — visual only */\n\n\n/* Focus — visual only */\n\n\n/* Mobile */\n@media (max-width: 600px) {\n\n    .gradio-container {\n        padding: 12px 8px !important;\n    }\n\n    \n\n    \n}\n\n\n/* ==========================================================\n   💳 FADL PAY — WHITE CENTER CARD\n   FIXED SIZE: 520px × 620px\n   ========================================================== */\n\n/* خلفية الصفحة */\nhtml,\nbody,\n#gradio,\n.gradio-container {\n    background: #f2f2f2 !important;\n}\n\n/* الصفحة */\n\n\n/* الكرت الأبيض الوحيد */\n\n\n/* منع الطبقات الرمادية داخل الكرت */\n\n\n/* الحقول */\n\n\n/* زر الدفع */\n\n\n/* الهاتف */\n@media (max-width: 600px) {\n\n    \n\n    \n}\n\n\n/* ============================================================\n   FADL PAY — SINGLE WHITE CARD\n   CSS ONLY\n   ============================================================ */\n\n/* الصفحة ليست كرتًا */\n.fadl-page {\n    width: 100% !important;\n    max-width: 100% !important;\n\n    min-height: 100vh !important;\n\n    margin: 0 !important;\n    padding: 24px 16px !important;\n\n    box-sizing: border-box !important;\n\n    display: flex !important;\n    align-items: center !important;\n    justify-content: center !important;\n\n    background: transparent !important;\n\n    border: 0 !important;\n    box-shadow: none !important;\n}\n\n/* الكرت الوحيد */\n.fadl-card,\n#fadl-pay-card {\n    width: 520px !important;\n    max-width: 100% !important;\n    min-width: 0 !important;\n\n    margin: 0 auto !important;\n    padding: 24px 28px !important;\n\n    box-sizing: border-box !important;\n\n    background: #ffffff !important;\n\n    border: 1px solid #e2e2e2 !important;\n    border-radius: 18px !important;\n\n    box-shadow:\n        0 8px 28px rgba(0,0,0,0.08) !important;\n\n    overflow: visible !important;\n}\n\n/* منع Gradio من توزيع الحقول أفقيًا */\n.fadl-card .gr-row,\n#fadl-pay-card .gr-row {\n    display: block !important;\n    width: 100% !important;\n}\n\n/* كل عنصر يأخذ سطرًا كاملًا */\n.fadl-card .gr-column,\n.fadl-card .form,\n.fadl-card .gr-form,\n.fadl-card .gr-group,\n.fadl-card .block,\n#fadl-pay-card .gr-column,\n#fadl-pay-card .form,\n#fadl-pay-card .gr-form,\n#fadl-pay-card .gr-group,\n#fadl-pay-card .block {\n    width: 100% !important;\n    max-width: 100% !important;\n    box-sizing: border-box !important;\n}\n\n/* تقليل الفراغات */\n.fadl-card .block,\n.fadl-card .form,\n.fadl-card .gr-form,\n.fadl-card .gr-group,\n#fadl-pay-card .block,\n#fadl-pay-card .form,\n#fadl-pay-card .gr-form,\n#fadl-pay-card .gr-group {\n    margin-top: 3px !important;\n    margin-bottom: 3px !important;\n}\n\n/* حقول الإدخال */\n.fadl-card input,\n.fadl-card textarea,\n.fadl-card select,\n#fadl-pay-card input,\n#fadl-pay-card textarea,\n#fadl-pay-card select {\n    width: 100% !important;\n    min-height: 38px !important;\n\n    box-sizing: border-box !important;\n}\n\n/* زر الدفع */\n.fadl-card button,\n#fadl-pay-card button {\n    width: 100% !important;\n    min-height: 42px !important;\n    box-sizing: border-box !important;\n}\n\n/* الهاتف */\n@media (max-width: 600px) {\n\n    .fadl-page {\n        min-height: 100vh !important;\n        padding: 12px 8px !important;\n        align-items: center !important;\n    }\n\n    .fadl-card,\n    #fadl-pay-card {\n        width: 100% !important;\n        max-width: 100% !important;\n\n        padding: 18px 16px !important;\n\n        border-radius: 16px !important;\n    }\n\n    .fadl-card input,\n    .fadl-card textarea,\n    .fadl-card select,\n    #fadl-pay-card input,\n    #fadl-pay-card textarea,\n    #fadl-pay-card select {\n        min-height: 36px !important;\n    }\n}\n\n\n/* ============================================================\n   💳 FADL PAY — ORA STYLE\n   Wide / White / Centered / Vertical\n   ============================================================ */\n\n/* الخلفية */\nbody,\n.gradio-container {\n    background: #f5f5f5 !important;\n}\n\n/* الحاوية الخارجية ليست كرتًا */\n.fadl-page {\n    display: block !important;\n\n    width: 100% !important;\n    max-width: 100% !important;\n\n    min-height: 100vh !important;\n\n    margin: 0 !important;\n    padding: 28px 16px !important;\n\n    box-sizing: border-box !important;\n\n    background: transparent !important;\n\n    border: 0 !important;\n    box-shadow: none !important;\n}\n\n/* الكرت الأبيض الوحيد */\n#fadl-pay-card {\n    display: block !important;\n\n    width: 560px !important;\n    max-width: calc(100vw - 32px) !important;\n    min-width: 0 !important;\n\n    margin: 0 auto !important;\n    padding: 30px 34px !important;\n\n    box-sizing: border-box !important;\n\n    background: #ffffff !important;\n\n    border: 1px solid #e5e5e5 !important;\n    border-radius: 20px !important;\n\n    box-shadow:\n        0 8px 30px rgba(0,0,0,0.08) !important;\n\n    overflow: visible !important;\n}\n\n/* كل محتوى الكرت عمودي */\n#fadl-pay-card > *,\n#fadl-pay-card .gr-column,\n#fadl-pay-card .block,\n#fadl-pay-card .form,\n#fadl-pay-card .gr-form,\n#fadl-pay-card .gr-group {\n    width: 100% !important;\n    max-width: 100% !important;\n    box-sizing: border-box !important;\n}\n\n/* منع أي توزيع أفقي */\n#fadl-pay-card .gr-row {\n    display: block !important;\n    width: 100% !important;\n}\n\n/* الحقول */\n#fadl-pay-card input,\n#fadl-pay-card textarea,\n#fadl-pay-card select {\n    display: block !important;\n\n    width: 100% !important;\n    max-width: 100% !important;\n\n    min-height: 40px !important;\n\n    box-sizing: border-box !important;\n}\n\n/* الزر */\n#fadl-pay-card button {\n    display: block !important;\n\n    width: 100% !important;\n    max-width: 100% !important;\n\n    min-height: 44px !important;\n\n    box-sizing: border-box !important;\n}\n\n/* المسافات */\n#fadl-pay-card .block,\n#fadl-pay-card .form,\n#fadl-pay-card .gr-form,\n#fadl-pay-card .gr-group {\n    margin-top: 4px !important;\n    margin-bottom: 4px !important;\n}\n\n/* الهاتف */\n@media (max-width: 600px) {\n\n    .fadl-page {\n        padding: 12px 8px !important;\n    }\n\n    #fadl-pay-card {\n        width: 100% !important;\n        max-width: 100% !important;\n\n        padding: 20px 16px !important;\n\n        border-radius: 17px !important;\n    }\n\n    #fadl-pay-card input,\n    #fadl-pay-card textarea,\n    #fadl-pay-card select {\n        min-height: 38px !important;\n    }\n}\n\n/* ==========================================================\n   💳 FADL PAY — FINAL SINGLE CARD OVERRIDE\n   ========================================================== */\n\nbody,\n.gradio-container {\n    background: #f5f5f5 !important;\n}\n\n.fadl-page {\n    width: 100% !important;\n    max-width: 100% !important;\n    min-height: 100vh !important;\n    margin: 0 !important;\n    padding: 30px 16px !important;\n\n    display: flex !important;\n    align-items: center !important;\n    justify-content: center !important;\n\n    background: transparent !important;\n    border: 0 !important;\n    box-shadow: none !important;\n}\n\n/* الكرت الحقيقي الوحيد */\n#fadl-pay-card {\n    width: 560px !important;\n    max-width: calc(100vw - 32px) !important;\n    min-width: 0 !important;\n\n    margin: 0 auto !important;\n    padding: 28px 34px !important;\n\n    box-sizing: border-box !important;\n\n    background: #ffffff !important;\n    border: 1px solid #e2e2e2 !important;\n    border-radius: 20px !important;\n\n    box-shadow: 0 10px 30px rgba(0, 0, 0, .08) !important;\n\n    display: flex !important;\n    flex-direction: column !important;\n}\n\n/* المحتوى كله داخل نفس الكرت */\n#fadl-pay-card > *,\n#fadl-pay-card .gradio-row,\n#fadl-pay-card .gradio-column {\n    width: 100% !important;\n    max-width: 100% !important;\n    box-sizing: border-box !important;\n}\n\n/* الحقول */\n#fadl-pay-card input,\n#fadl-pay-card textarea,\n#fadl-pay-card select,\n#fadl-pay-card [role="listbox"] {\n    box-sizing: border-box !important;\n    min-height: 38px !important;\n    height: 38px !important;\n}\n\n/* Labels */\n#fadl-pay-card label {\n    margin-bottom: 5px !important;\n    font-size: 14px !important;\n    line-height: 1.25 !important;\n}\n\n/* تقليل المسافات */\n#fadl-pay-card .block {\n    margin-bottom: 9px !important;\n}\n\n/* زر الدفع */\n#fadl-pay-card button {\n    min-height: 42px !important;\n    height: 42px !important;\n    margin-top: 5px !important;\n    border-radius: 10px !important;\n    font-weight: 600 !important;\n}\n\n/* النتيجة */\n#fadl-pay-card .markdown {\n    margin-top: 10px !important;\n}\n\n/* Auto Currency داخل الكرت */\n#fadl-pay-card .fadl-auto-currency-card,\n#fadl-pay-card .fadl-currency-card {\n    width: 100% !important;\n    box-sizing: border-box !important;\n    margin: 4px 0 9px !important;\n}\n\n/* Mobile */\n@media (max-width: 640px) {\n\n    .fadl-page {\n        min-height: auto !important;\n        padding: 18px 10px !important;\n        align-items: flex-start !important;\n    }\n\n    #fadl-pay-card {\n        width: 100% !important;\n        max-width: 100% !important;\n        padding: 22px 18px !important;\n        border-radius: 16px !important;\n    }\n\n    #fadl-pay-card input,\n    #fadl-pay-card textarea,\n    #fadl-pay-card select,\n    #fadl-pay-card [role="listbox"] {\n        min-height: 36px !important;\n        height: 36px !important;\n    }\n\n    #fadl-pay-card button {\n        min-height: 40px !important;\n        height: 40px !important;\n    }\n}\n\n/* ============================================================\n   FADL PAY — TEXT + SVG VISIBILITY FIX\n   ============================================================ */\n\n/* النصوص داخل كرت الدفع */\n#fadl-pay-card,\n#fadl-pay-card label,\n#fadl-pay-card .label-wrap,\n#fadl-pay-card .wrap,\n#fadl-pay-card .markdown,\n#fadl-pay-card .prose,\n#fadl-pay-card p,\n#fadl-pay-card span {\n    color: #222222 !important;\n}\n\n/* الحقول */\n#fadl-pay-card input,\n#fadl-pay-card textarea,\n#fadl-pay-card select {\n    color: #222222 !important;\n    -webkit-text-fill-color: #222222 !important;\n}\n\n/* Placeholder */\n#fadl-pay-card input::placeholder,\n#fadl-pay-card textarea::placeholder {\n    color: #777777 !important;\n    -webkit-text-fill-color: #777777 !important;\n    opacity: 1 !important;\n}\n\n/* القوائم */\n#fadl-pay-card [role="listbox"],\n#fadl-pay-card [role="combobox"] {\n    color: #222222 !important;\n}\n\n/* SVG الحقيقي يبقى موجودًا كعنصر رسومي،\n   لكن أي SVG تم حقنه كنص لا يظهر */\n#fadl-pay-card svg {\n    color: inherit !important;\n}\n\n/* منع ظهور كلمة svg كنص */\n#fadl-pay-card .svg-text,\n#fadl-pay-card .svg-label {\n    display: none !important;\n}\n\n/* ============================================================\n   FADL PAY — DROPDOWN TEXT VISIBILITY\n   ============================================================ */\n\n/* Dropdown container */\n#fadl-pay-card .gradio-dropdown,\n#fadl-pay-card [data-testid="dropdown"] {\n    color: #222222 !important;\n}\n\n/* Selected value */\n#fadl-pay-card .gradio-dropdown input,\n#fadl-pay-card [role="combobox"] {\n    color: #222222 !important;\n    -webkit-text-fill-color: #222222 !important;\n    font-weight: 600 !important;\n    opacity: 1 !important;\n}\n\n/* Dropdown options */\n#fadl-pay-card [role="option"],\n#fadl-pay-card [role="option"] *,\n#fadl-pay-card .options li,\n#fadl-pay-card .options li * {\n    color: #222222 !important;\n    -webkit-text-fill-color: #222222 !important;\n    font-weight: 500 !important;\n    opacity: 1 !important;\n}\n\n/* Placeholder */\n#fadl-pay-card [role="combobox"]::placeholder {\n    color: #555555 !important;\n    -webkit-text-fill-color: #555555 !important;\n    opacity: 1 !important;\n}\n\n/* Dropdown arrow/icon — keep visible but don\'t turn it into text */\n#fadl-pay-card .wrap svg {\n    opacity: 1 !important;\n}\n\n/* Do NOT allow SVG fallback text to inherit as visible text */\n#fadl-pay-card .wrap > svg {\n    color: #555555 !important;\n}\n\n/* ============================================================\n   FADL PAY — SOFT LIGHT THEME\n   ============================================================ */\n\n/* خلفية مريحة للعين */\nbody,\n.gradio-container {\n    background: #f1f2f4 !important;\n}\n\n/* الكرت نفسه يبقى أبيض ولكن أقل حدة */\n#fadl-pay-card {\n    background: #fafafa !important;\n    border-color: #dddddf !important;\n    box-shadow: 0 10px 28px rgba(0, 0, 0, .07) !important;\n}\n\n/* الحقول */\n#fadl-pay-card input,\n#fadl-pay-card textarea,\n#fadl-pay-card select,\n#fadl-pay-card [role="combobox"] {\n    background: #f5f5f6 !important;\n    border-color: #d6d6d8 !important;\n}\n\n/* النص */\n#fadl-pay-card,\n#fadl-pay-card label,\n#fadl-pay-card span,\n#fadl-pay-card p {\n    color: #252525 !important;\n}\n\n\n\n/* ============================================================\n   FADL PAY — FINAL DROPDOWN + BUTTON VISIBILITY\n   ============================================================ */\n\n/* ---------- Dropdown field ---------- */\n\n#fadl-pay-card .gradio-dropdown,\n#fadl-pay-card [data-testid="dropdown"],\n#fadl-pay-card [role="combobox"] {\n    background: #f3f3f4 !important;\n    color: #1f1f1f !important;\n    opacity: 1 !important;\n    border-color: #c9c9cc !important;\n}\n\n#fadl-pay-card .gradio-dropdown input,\n#fadl-pay-card [role="combobox"] input,\n#fadl-pay-card input[role="combobox"] {\n    background: #f3f3f4 !important;\n    color: #1f1f1f !important;\n    -webkit-text-fill-color: #1f1f1f !important;\n    opacity: 1 !important;\n}\n\n/* ---------- Open options ---------- */\n\n#fadl-pay-card [role="listbox"],\n#fadl-pay-card .options,\n#fadl-pay-card [role="listbox"] ul {\n    background: #ffffff !important;\n    color: #171717 !important;\n    opacity: 1 !important;\n    border: 1px solid #cccccf !important;\n    box-shadow: 0 8px 22px rgba(0,0,0,.14) !important;\n    z-index: 99999 !important;\n}\n\n#fadl-pay-card [role="option"],\n#fadl-pay-card [role="option"] *,\n#fadl-pay-card .options li,\n#fadl-pay-card .options li * {\n    background: #ffffff !important;\n    color: #171717 !important;\n    -webkit-text-fill-color: #171717 !important;\n    opacity: 1 !important;\n    visibility: visible !important;\n    font-weight: 500 !important;\n}\n\n#fadl-pay-card [role="option"]:hover,\n#fadl-pay-card .options li:hover {\n    background: #eeeeef !important;\n    color: #111111 !important;\n}\n\n/* ---------- Pay button ---------- */\n\n#fadl-pay-card button.fadl-pay-btn,\n#fadl-pay-card .fadl-pay-btn,\n#fadl-pay-card button {\n    position: relative !important;\n    z-index: 10000 !important;\n    pointer-events: auto !important;\n    cursor: pointer !important;\n    opacity: 1 !important;\n    visibility: visible !important;\n    color: #ffffff !important;\n    -webkit-text-fill-color: #ffffff !important;\n    background: #303236 !important;\n    border: 1px solid #303236 !important;\n    min-height: 42px !important;\n    height: 42px !important;\n}\n\n#fadl-pay-card button.fadl-pay-btn:hover,\n#fadl-pay-card .fadl-pay-btn:hover {\n    background: #202124 !important;\n}\n\n#fadl-pay-card button.fadl-pay-btn:disabled,\n#fadl-pay-card .fadl-pay-btn:disabled {\n    opacity: .65 !important;\n    pointer-events: auto !important;\n}\n\n/* ---------- Keep card above background layers ---------- */\n\n#fadl-pay-card {\n    position: relative !important;\n    z-index: 10 !important;\n}\n'
 
 
 
@@ -532,10 +257,7 @@ FADL_AUTO_CURRENCY_JS = r"""
 
             const container =
                 document.querySelector(
-                    ".fadl-pay-card"
-                ) ||
-                document.querySelector(
-                    ".gradio-container"
+                    "#fadl-pay-card"
                 );
 
             if (container) {
@@ -781,7 +503,7 @@ def submit_payment(
 
     merchant_reference = os.getenv(
         "FADL_UI_MERCHANT_REFERENCE",
-        "MER-007FFD589DE34A66A9ACB5063DD61F51"
+        ""
     ).strip()
 
     if not merchant_reference:
@@ -867,7 +589,7 @@ with gr.Blocks(
             )
 
             customer_reference = gr.Textbox(
-                label="👤 رقم / مرجع العميل",
+                label="👤 مرجع العميل",
                 placeholder="أدخل رقم أو مرجع العميل",
                 interactive=True,
             )
@@ -878,7 +600,6 @@ with gr.Blocks(
                 label="💳 طريقة الدفع",
                 interactive=True,
             )
-
             pay_button = gr.Button(
                 "💳 ادفع الآن",
                 variant="primary",
@@ -891,6 +612,12 @@ with gr.Blocks(
                 """
                 <div class="fadl-secure">
                     🔒 دفع آمن • FADL PAY
+                </div>
+
+                <div class="fadl-admin-link">
+                    <a href="/admin/" target="_self">
+                        🔐 الإدارة المالية
+                    </a>
                 </div>
                 """
             )
