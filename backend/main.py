@@ -25,6 +25,8 @@ app = FastAPI(
 )
 
 
+
+
 @app.get("/health")
 def health():
     return {
@@ -49,6 +51,18 @@ for route in api_app.routes:
 
 
 # ============================================================
+# FINANCIAL ADMIN
+# يجب تركيبه قبل الصفحة الرئيسية /
+# ============================================================
+
+app = gr.mount_gradio_app(
+    app,
+    financial_admin_demo,
+    path="/admin/",
+)
+
+
+# ============================================================
 # PAYMENT UI
 # الصفحة الرئيسية /
 # ============================================================
@@ -65,9 +79,38 @@ app = gr.mount_gradio_app(
     path="/",
 )
 
-# FINANCIAL ADMIN
-app = gr.mount_gradio_app(
-    app,
-    financial_admin_demo,
-    path="/admin",
-)
+# ============================================================
+# FINAL ADMIN ROUTE ORDER
+# الإدارة يجب أن تسبق Root Gradio
+# ============================================================
+
+_admin_mount = None
+_root_mount = None
+
+for _route in app.router.routes:
+
+    _route_path = getattr(_route, "path", None)
+
+    if _route_path == "/admin":
+        _admin_mount = _route
+
+    elif _route_path == "":
+        _root_mount = _route
+
+if _admin_mount is None:
+    raise RuntimeError("❌ Admin Gradio mount not found")
+
+if _root_mount is None:
+    raise RuntimeError("❌ Root Gradio mount not found")
+
+_admin_index = app.router.routes.index(_admin_mount)
+_root_index = app.router.routes.index(_root_mount)
+
+if _admin_index > _root_index:
+
+    app.router.routes.remove(_admin_mount)
+    app.router.routes.remove(_root_mount)
+
+    app.router.routes.append(_admin_mount)
+    app.router.routes.append(_root_mount)
+
