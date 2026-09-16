@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-import secrets
 import hmac
+import secrets
 
 
 SESSION_TTL_SECONDS = 8 * 60 * 60
@@ -111,7 +111,10 @@ def revoke_session(session_token):
     if not session_token:
         return False
 
-    return _sessions.pop(session_token, None) is not None
+    return (
+        _sessions.pop(session_token, None)
+        is not None
+    )
 
 
 def active_session_count():

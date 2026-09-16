@@ -1,20 +1,19 @@
-from security.merchant_session import get_session_merchant
-
 import sqlite3
 import gradio as gr
 
-DB_PATH = "/content/FADL_PAY_RESTORE/database/fadl_pay.db"
+import database.database as db_module
+from security.merchant_session import get_session_merchant
 
 
 def dashboard_data(merchant_reference):
     """
     Return dashboard data for the authenticated merchant only.
-    No cross-merchant/global transaction data.
     """
 
-    from database.database import DB_PATH
+    if not merchant_reference:
+        raise PermissionError("Authentication required")
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(db_module.DB_PATH)
     conn.row_factory = sqlite3.Row
 
     try:
@@ -75,9 +74,7 @@ def dashboard_data(merchant_reference):
 def dashboard_data_from_session(session_token):
     """
     Resolve merchant identity exclusively from the
-    authenticated server-side session.
-
-    The caller does NOT provide merchant_reference.
+    server-side authenticated session.
     """
 
     if not session_token:
@@ -89,24 +86,6 @@ def dashboard_data_from_session(session_token):
         raise PermissionError("Invalid or expired session")
 
     return dashboard_data(merchant_reference)
-
-def create_dashboard(merchant_reference):
-    """
-    Build dashboard using the authenticated merchant session.
-    """
-
-    data = dashboard_data(merchant_reference)
-
-    return {
-        "merchant": data["name"],
-        "merchant_reference": data["merchant_reference"],
-        "email": data["email"],
-        "status": data["status"],
-        "transactions": data["transactions"],
-        "ledger": data["ledger"],
-        "events": data["events"],
-    }
-
 
 
 def create_dashboard_from_session(session_token):
@@ -126,3 +105,46 @@ def create_dashboard_from_session(session_token):
         "ledger": data["ledger"],
         "events": data["events"],
     }
+
+
+def create_dashboard(session_token=None):
+
+    if not session_token:
+        raise PermissionError("Authentication required")
+
+    data = create_dashboard_from_session(session_token)
+
+    with gr.Blocks() as demo:
+
+        gr.Markdown(
+            "# 🏪 FADL PAY\n## لوحة تحكم التاجر"
+        )
+
+        info = gr.Markdown(
+            f"""
+### 👤 التاجر
+**{data["merchant"]}**
+
+### 🆔 Merchant Reference
+`{data["merchant_reference"]}`
+
+### ✉️ البريد
+{data["email"]}
+
+### 🟢 الحالة
+{data["status"]}
+
+---
+
+### 💳 المبيعات
+**عدد العمليات:** {data["transactions"]}
+
+### 💰 المالية
+**الحركات المالية:** {data["ledger"]}
+
+### 🔔 الإشعارات
+**الأحداث:** {data["events"]}
+"""
+        )
+
+    return demo

@@ -1,3 +1,4 @@
+
 # ============================================================
 # 💰 FADL PAY — Financial Administration UI
 # ============================================================
@@ -9,6 +10,7 @@ from app.financial_admin import (
     get_transaction_list,
     search_transactions,
 )
+
 
 
 def transaction_rows(data):
@@ -30,7 +32,6 @@ def transaction_rows(data):
 def load_financial_dashboard():
     data = get_financial_summary()
     transactions = get_transaction_list()
-
     s = data["summary"]
 
     summary = f"""
@@ -79,12 +80,12 @@ def load_financial_dashboard():
 
 def search_transaction_rows(query):
     results = search_transactions(query)
-
     return transaction_rows(results)
 
 
 def clear_transaction_search():
     return transaction_rows(get_transaction_list())
+
 
 
 with gr.Blocks(title="FADL PAY — الإدارة المالية") as financial_admin_demo:
@@ -178,6 +179,7 @@ with gr.Blocks(title="FADL PAY — الإدارة المالية") as financial_
         ],
         interactive=False,
     )
+
 
     refresh.click(
         fn=load_financial_dashboard,

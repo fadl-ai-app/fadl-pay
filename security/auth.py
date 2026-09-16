@@ -37,10 +37,8 @@ def _api_rate_blocked(request, api_key):
         return False
 
     now = time.time()
-
     blocked_until = state.get("blocked_until", 0)
 
-    # 0 = not currently blocked
     if blocked_until <= 0:
         return False
 
@@ -80,21 +78,25 @@ def _api_rate_clear(request, api_key):
     key = _api_rate_key(request, api_key)
     _api_rate_state.pop(key, None)
 
-
 def authenticate_api_key(
     request,
     authorization: str | None = Header(default=None),
 ):
+    """
+    التحقق من API Key عبر:
+    Authorization: Bearer <API_KEY>
+    """
+
     if not authorization:
         raise HTTPException(
             status_code=401,
-            detail="Missing Authorization header",
+            detail="Missing Authorization header"
         )
 
     if not authorization.startswith("Bearer "):
         raise HTTPException(
             status_code=401,
-            detail="Invalid Authorization format",
+            detail="Invalid Authorization format"
         )
 
     api_key = authorization[7:].strip()
@@ -102,7 +104,7 @@ def authenticate_api_key(
     if not api_key:
         raise HTTPException(
             status_code=401,
-            detail="Missing API Key",
+            detail="Missing API Key"
         )
 
     if _api_rate_blocked(request, api_key):
@@ -118,7 +120,7 @@ def authenticate_api_key(
 
         raise HTTPException(
             status_code=401,
-            detail="Invalid or inactive API Key",
+            detail="Invalid or inactive API Key"
         )
 
     _api_rate_clear(request, api_key)
