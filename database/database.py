@@ -22,6 +22,7 @@ def initialize_database():
             merchant_reference TEXT UNIQUE NOT NULL,
             name TEXT NOT NULL,
             email TEXT NOT NULL,
+        password_hash TEXT,
             status TEXT NOT NULL DEFAULT 'pending',
             created_at TEXT NOT NULL
         )

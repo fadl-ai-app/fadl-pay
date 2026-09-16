@@ -1,3 +1,4 @@
+from security.merchant_session import get_session_merchant
 
 import sqlite3
 import gradio as gr
@@ -5,79 +6,123 @@ import gradio as gr
 DB_PATH = "/content/FADL_PAY_RESTORE/database/fadl_pay.db"
 
 
-def dashboard_data():
+def dashboard_data(merchant_reference):
+    """
+    Return dashboard data for the authenticated merchant only.
+    No cross-merchant/global transaction data.
+    """
+
+    from database.database import DB_PATH
 
     conn = sqlite3.connect(DB_PATH)
-    cur = conn.cursor()
+    conn.row_factory = sqlite3.Row
 
-    merchant = cur.execute(
-        "SELECT merchant_reference FROM merchants LIMIT 1"
-    ).fetchone()
+    try:
+        merchant = conn.execute(
+            """
+            SELECT merchant_reference, name, email, status
+            FROM merchants
+            WHERE merchant_reference = ?
+            LIMIT 1
+            """,
+            (merchant_reference,),
+        ).fetchone()
 
-    transactions = cur.execute(
-        "SELECT COUNT(*) FROM transactions"
-    ).fetchone()[0]
+        if not merchant:
+            raise ValueError("Merchant not found")
 
-    ledger = cur.execute(
-        "SELECT COUNT(*) FROM ledger_entries"
-    ).fetchone()[0]
+        transactions = conn.execute(
+            """
+            SELECT COUNT(*)
+            FROM transactions
+            WHERE merchant_reference = ?
+            """,
+            (merchant_reference,),
+        ).fetchone()[0]
 
-    events = cur.execute(
-        "SELECT COUNT(*) FROM transaction_events"
-    ).fetchone()[0]
+        ledger = conn.execute(
+            """
+            SELECT COUNT(*)
+            FROM ledger_entries
+            WHERE merchant_reference = ?
+            """,
+            (merchant_reference,),
+        ).fetchone()[0]
 
-    conn.close()
+        events = conn.execute(
+            """
+            SELECT COUNT(*)
+            FROM transaction_events
+            WHERE merchant_reference = ?
+            """,
+            (merchant_reference,),
+        ).fetchone()[0]
 
-    name = merchant[0] if merchant else "غير متوفر"
+        return {
+            "merchant_reference": merchant["merchant_reference"],
+            "name": merchant["name"],
+            "email": merchant["email"],
+            "status": merchant["status"],
+            "transactions": transactions,
+            "ledger": ledger,
+            "events": events,
+        }
 
-    return f"""
-# 🏪 لوحة التاجر — FADL PAY
-
-## 👤 التاجر
-{name}
-
-🟢 حالة الحساب: نشط
-
----
-
-## 💳 المبيعات
-**عدد العمليات:** {transactions}
-
----
-
-## 💰 المالية
-**الحركات المالية:** {ledger}
-
----
-
-## 🔔 الإشعارات
-**الأحداث:** {events}
-
----
-
-✅ النظام يعمل بشكل طبيعي
-"""
+    finally:
+        conn.close()
 
 
-def create_dashboard():
+def dashboard_data_from_session(session_token):
+    """
+    Resolve merchant identity exclusively from the
+    authenticated server-side session.
 
-    with gr.Blocks() as demo:
+    The caller does NOT provide merchant_reference.
+    """
 
-        gr.Markdown(
-            "# 🏪 FADL PAY\n## لوحة تحكم التاجر"
-        )
+    if not session_token:
+        raise PermissionError("Authentication required")
 
-        info = gr.Markdown(
-            dashboard_data()
-        )
+    merchant_reference = get_session_merchant(session_token)
 
-        refresh = gr.Button(
-            "🔄 تحديث البيانات"
-        )
+    if not merchant_reference:
+        raise PermissionError("Invalid or expired session")
 
-        refresh.click(
-            dashboard_data,
-            outputs=info
-        )
+    return dashboard_data(merchant_reference)
 
-    return demo
+def create_dashboard(merchant_reference):
+    """
+    Build dashboard using the authenticated merchant session.
+    """
+
+    data = dashboard_data(merchant_reference)
+
+    return {
+        "merchant": data["name"],
+        "merchant_reference": data["merchant_reference"],
+        "email": data["email"],
+        "status": data["status"],
+        "transactions": data["transactions"],
+        "ledger": data["ledger"],
+        "events": data["events"],
+    }
+
+
+
+def create_dashboard_from_session(session_token):
+    """
+    Create dashboard data using only the authenticated
+    server-side merchant session.
+    """
+
+    data = dashboard_data_from_session(session_token)
+
+    return {
+        "merchant": data["name"],
+        "merchant_reference": data["merchant_reference"],
+        "email": data["email"],
+        "status": data["status"],
+        "transactions": data["transactions"],
+        "ledger": data["ledger"],
+        "events": data["events"],
+    }

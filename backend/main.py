@@ -7,6 +7,7 @@ Sandbox / Prototype
 
 import gradio as gr
 from fastapi import FastAPI
+from backend.merchant_auth_routes import router as merchant_auth_router
 
 from database.database import initialize_database
 from backend.api import app as api_app
@@ -51,6 +52,12 @@ for route in api_app.routes:
 # PAYMENT UI
 # الصفحة الرئيسية /
 # ============================================================
+
+# ============================================================
+# MERCHANT AUTHENTICATION
+# Must be mounted before Gradio replaces the app reference.
+# ============================================================
+app.include_router(merchant_auth_router)
 
 app = gr.mount_gradio_app(
     app,
