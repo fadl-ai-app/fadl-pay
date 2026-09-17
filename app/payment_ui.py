@@ -281,6 +281,15 @@ body {
 
 
 import gradio as gr
+# ============================================================
+# 🛡️ INTEGRATED FINANCIAL ADMIN
+# نستورد دوال الإدارة فقط — بدون إنشاء صفحة مستقلة
+# ============================================================
+from app.financial_admin_ui import (
+    load_financial_dashboard,
+    search_transaction_rows,
+    clear_transaction_search,
+)
 
 
 # ============================================================
@@ -906,4 +915,154 @@ with gr.Blocks(
                 ],
                 outputs=result,
             )
+
+
+        # ====================================================
+        # 🛡️ FINANCIAL ADMIN — داخل نفس الصفحة
+        # ====================================================
+
+        gr.Markdown(
+            """
+            ---
+            # 💰 FADL PAY — الإدارة المالية
+            """
+        )
+
+        refresh = gr.Button(
+            "🔄 تحديث البيانات",
+            variant="primary",
+        )
+
+        summary = gr.Markdown()
+
+        gr.Markdown("### 💱 الملخص حسب العملة")
+
+        currency_table = gr.Dataframe(
+            headers=[
+                "العملة",
+                "المعاملات",
+                "الإجمالي",
+                "المحصّل",
+                "المرتجع",
+            ],
+            datatype=[
+                "str",
+                "number",
+                "number",
+                "number",
+                "number",
+            ],
+            interactive=False,
+        )
+
+        gr.Markdown("### 🏪 الملخص حسب التاجر")
+
+        merchant_table = gr.Dataframe(
+            headers=[
+                "مرجع التاجر",
+                "المعاملات",
+                "الإجمالي",
+                "المحصّل",
+                "المرتجع",
+            ],
+            datatype=[
+                "str",
+                "number",
+                "number",
+                "number",
+                "number",
+            ],
+            interactive=False,
+        )
+
+        gr.Markdown("### 📋 سجل المعاملات")
+
+        with gr.Row():
+
+            transaction_search = gr.Textbox(
+                label="🔎 البحث",
+                placeholder="مرجع المعاملة أو التاجر أو العميل",
+                scale=4,
+            )
+
+            search_button = gr.Button(
+                "بحث",
+                variant="primary",
+                scale=1,
+            )
+
+            clear_button = gr.Button(
+                "مسح",
+                scale=1,
+            )
+
+        transaction_table = gr.Dataframe(
+            headers=[
+                "مرجع المعاملة",
+                "مرجع التاجر",
+                "مرجع العميل",
+                "المبلغ",
+                "العملة",
+                "طريقة الدفع",
+                "الحالة",
+                "تاريخ الإنشاء",
+            ],
+            datatype=[
+                "str",
+                "str",
+                "str",
+                "number",
+                "str",
+                "str",
+                "str",
+                "str",
+            ],
+            interactive=False,
+        )
+
+        # --------------------------------------------
+        # أحداث الإدارة المالية
+        # --------------------------------------------
+
+        refresh.click(
+            fn=load_financial_dashboard,
+            outputs=[
+                summary,
+                currency_table,
+                merchant_table,
+                transaction_table,
+            ],
+        )
+
+        search_button.click(
+            fn=search_transaction_rows,
+            inputs=transaction_search,
+            outputs=transaction_table,
+        )
+
+        transaction_search.submit(
+            fn=search_transaction_rows,
+            inputs=transaction_search,
+            outputs=transaction_table,
+        )
+
+        clear_button.click(
+            fn=clear_transaction_search,
+            outputs=transaction_table,
+        )
+
+        # تحميل الإدارة المالية تلقائيًا عند فتح الصفحة
+        demo.load(
+            fn=load_financial_dashboard,
+            outputs=[
+                summary,
+                currency_table,
+                merchant_table,
+                transaction_table,
+            ],
+        )
+
+        # ====================================================
+        # 🛡️ INTEGRATED_FINANCIAL_ADMIN_V1
+        # ====================================================
 

@@ -66,7 +66,9 @@ async def admin_redirect():
     return RedirectResponse(url="/admin/")
 
 
+# ============================================================
 # FINANCIAL ADMIN
+# الإدارة المالية
 # يجب أن يسبق root حتى لا تلتقط واجهة الدفع مسار /admin
 # ============================================================
 
@@ -86,3 +88,4 @@ app = gr.mount_gradio_app(
     demo,
     path="/",
 )
+
