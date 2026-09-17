@@ -1,3 +1,4 @@
+from starlette.responses import RedirectResponse
 """
 Fadl Pay
 Main Application
@@ -59,6 +60,12 @@ app.include_router(
 
 
 # ============================================================
+# Redirect /admin → /admin/
+@app.get("/admin", include_in_schema=False)
+async def admin_redirect():
+    return RedirectResponse(url="/admin/")
+
+
 # FINANCIAL ADMIN
 # يجب أن يسبق root حتى لا تلتقط واجهة الدفع مسار /admin
 # ============================================================
