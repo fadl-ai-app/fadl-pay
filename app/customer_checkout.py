@@ -1,7 +1,7 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi import Request
-from payments.transaction_engine import create_transaction, get_transaction
+from payments.transaction_engine import create_transaction, get_transaction, update_transaction_status
 
 router = APIRouter()
 
@@ -89,6 +89,72 @@ async def create_customer_payment(request: Request):
         "success": True,
         "environment": "sandbox",
         "transaction": transaction,
+    }
+
+
+@router.post("/pay/sandbox/status")
+async def customer_sandbox_status(request: Request):
+    """
+    Sandbox-only Customer Checkout completion endpoint.
+
+    This endpoint is intentionally separate from the public
+    API-key-protected sandbox endpoint in backend/api.py.
+
+    It is used only by the Customer Checkout Sandbox controls.
+    No real money is processed.
+    """
+
+    data = await request.json()
+
+    transaction_reference = data.get("transaction_reference")
+    new_status = data.get("status")
+
+    allowed_statuses = {
+        "paid",
+        "failed",
+        "cancelled",
+    }
+
+    if not transaction_reference:
+        raise HTTPException(
+            status_code=400,
+            detail="رقم العملية مطلوب",
+        )
+
+    if new_status not in allowed_statuses:
+        raise HTTPException(
+            status_code=400,
+            detail="حالة Sandbox غير مدعومة",
+        )
+
+    MERCHANT_REFERENCE = "MER-007FFD589DE34A66A9ACB5063DD61F51"
+
+    transaction = get_transaction(
+        transaction_reference,
+        merchant_reference=MERCHANT_REFERENCE,
+    )
+
+    if transaction is None:
+        raise HTTPException(
+            status_code=404,
+            detail="العملية غير موجودة",
+        )
+
+    try:
+        result = update_transaction_status(
+            transaction_reference,
+            new_status,
+        )
+    except ValueError as error:
+        raise HTTPException(
+            status_code=400,
+            detail=str(error),
+        )
+
+    return {
+        "success": True,
+        "environment": "sandbox",
+        "transaction": result,
     }
 
 
@@ -417,22 +483,222 @@ async function startPayment() {
                 data.transaction;
 
             showResult(
-                "🟢 تم إنشاء العملية بنجاح\n\n" +
+                "🟢 تم إنشاء العملية بنجاح\\n\\n" +
                 "رقم العملية: " +
                 transaction.transaction_reference +
-                "\nالحالة: " +
+                "\\nالحالة: " +
                 transaction.status +
-                "\nالمبلغ: " +
+                "\\nالمبلغ: " +
                 transaction.amount +
                 " " +
                 transaction.currency,
                 true
             );
 
+            showSandboxControls(transaction);
+
         } else {
 
             showResult(
                 "❌ تعذر إنشاء العملية",
+                false
+            );
+        }
+
+    } catch (error) {
+
+        showResult(
+            "❌ حدث خطأ في الاتصال بالسيرفر",
+            false
+        );
+
+        console.error(error);
+    }
+}
+
+
+function showSandboxControls(transaction) {
+
+    const result = document.getElementById("result");
+
+    if (!result) {
+        return;
+    }
+
+    const oldControls =
+        document.getElementById("sandbox-controls");
+
+    if (oldControls) {
+        oldControls.remove();
+    }
+
+    const controls =
+        document.createElement("div");
+
+    controls.id = "sandbox-controls";
+
+    controls.style.marginTop = "16px";
+    controls.style.padding = "14px";
+    controls.style.border = "1px solid #ddd";
+    controls.style.borderRadius = "12px";
+    controls.style.background = "#fafafa";
+
+    controls.innerHTML = `
+        <div style="
+            font-weight:700;
+            margin-bottom:10px;
+            text-align:center;
+        ">
+            🧪 نتيجة الدفع — Sandbox
+        </div>
+
+        <div style="
+            display:flex;
+            gap:8px;
+            flex-wrap:wrap;
+            justify-content:center;
+        ">
+            <button
+                type="button"
+                onclick="completeSandboxPayment(
+                    '${transaction.transaction_reference}',
+                    'paid'
+                )"
+                style="
+                    padding:9px 14px;
+                    border:0;
+                    border-radius:8px;
+                    cursor:pointer;
+                "
+            >
+                🟢 نجاح الدفع
+            </button>
+
+            <button
+                type="button"
+                onclick="completeSandboxPayment(
+                    '${transaction.transaction_reference}',
+                    'failed'
+                )"
+                style="
+                    padding:9px 14px;
+                    border:0;
+                    border-radius:8px;
+                    cursor:pointer;
+                "
+            >
+                🔴 فشل الدفع
+            </button>
+
+            <button
+                type="button"
+                onclick="completeSandboxPayment(
+                    '${transaction.transaction_reference}',
+                    'cancelled'
+                )"
+                style="
+                    padding:9px 14px;
+                    border:0;
+                    border-radius:8px;
+                    cursor:pointer;
+                "
+            >
+                ⚫ إلغاء الدفع
+            </button>
+        </div>
+    `;
+
+    result.parentNode.insertBefore(
+        controls,
+        result.nextSibling
+    );
+}
+
+
+async function completeSandboxPayment(
+    transactionReference,
+    status
+) {
+
+    showResult(
+        "⏳ جارٍ تحديث نتيجة الدفع في Sandbox...",
+        true
+    );
+
+    try {
+
+        const response = await fetch(
+            "/pay/sandbox/status",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    transaction_reference:
+                        transactionReference,
+                    status: status
+                })
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+
+            showResult(
+                "❌ " +
+                (
+                    data.detail ||
+                    "تعذر تحديث حالة العملية"
+                ),
+                false
+            );
+
+            return;
+        }
+
+        if (
+            data.success &&
+            data.transaction
+        ) {
+
+            const result =
+                data.transaction;
+
+            let icon = "🟢";
+
+            if (result.new_status === "failed") {
+                icon = "🔴";
+            } else if (
+                result.new_status === "cancelled"
+            ) {
+                icon = "⚫";
+            }
+
+            showResult(
+                icon +
+                " نتيجة الدفع: " +
+                result.new_status +
+                "\\n\\n" +
+                "رقم العملية: " +
+                result.transaction_reference,
+                result.new_status === "paid"
+            );
+
+            const controls =
+                document.getElementById(
+                    "sandbox-controls"
+                );
+
+            if (controls) {
+                controls.remove();
+            }
+
+        } else {
+
+            showResult(
+                "❌ تعذر تحديث حالة العملية",
                 false
             );
         }

@@ -7,13 +7,15 @@ Sandbox / Prototype
 """
 
 import gradio as gr
-from fastapi import FastAPI
+from fastapi import FastAPI, Cookie, HTTPException
 
 from database.database import initialize_database
 from backend.api import app as api_app
 from backend.merchant_api_login import router as merchant_api_login_router
 from app.payment_ui import demo
 from app.financial_admin_ui import financial_admin_demo
+from app.merchant_dashboard import dashboard_data_from_session
+from app.customer_checkout import router as customer_checkout_router
 
 
 initialize_database()
@@ -58,6 +60,42 @@ app.include_router(
     merchant_api_login_router,
 )
 
+
+# ============================================================
+# CUSTOMER CHECKOUT
+# /pay + /pay/create
+# ============================================================
+
+app.include_router(customer_checkout_router)
+
+
+
+
+# ============================================================
+# MERCHANT DASHBOARD ROUTE
+# API Key → Merchant Session → Dashboard
+# ============================================================
+
+@app.get("/merchant/dashboard")
+def merchant_dashboard(
+    fadl_merchant_session: str | None = Cookie(default=None),
+):
+    if not fadl_merchant_session:
+        raise HTTPException(
+            status_code=401,
+            detail="Merchant authentication required",
+        )
+
+    try:
+        return dashboard_data_from_session(
+            fadl_merchant_session
+        )
+
+    except PermissionError as exc:
+        raise HTTPException(
+            status_code=401,
+            detail=str(exc),
+        )
 
 # ============================================================
 # Redirect /admin → /admin/

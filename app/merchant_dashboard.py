@@ -52,7 +52,7 @@ def dashboard_data(merchant_reference):
             """
             SELECT COUNT(*)
             FROM transaction_events
-            WHERE merchant_reference = ?
+            WHERE json_extract(event_data, '$.merchant_reference') = ?
             """,
             (merchant_reference,),
         ).fetchone()[0]

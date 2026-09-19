@@ -1,3 +1,4 @@
 fastapi
 uvicorn[standard]
 gradio==6.26.0
+pydantic
