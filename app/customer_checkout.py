@@ -5,7 +5,251 @@ from payments.transaction_engine import create_transaction, get_transaction, upd
 
 router = APIRouter()
 
-COUNTRY_CURRENCY = {"SD": "SDG", "EG": "EGP", "SA": "SAR", "AE": "AED", "US": "USD"}
+COUNTRY_CURRENCY = {
+    "AD": "EUR",
+    "AE": "AED",
+    "AF": "AFN",
+    "AG": "XCD",
+    "AL": "ALL",
+    "AM": "AMD",
+    "AO": "AOA",
+    "AQ": None,
+    "AR": "ARS",
+    "AS": "USD",
+    "AT": "EUR",
+    "AU": "AUD",
+    "AW": "AWG",
+    "AX": "EUR",
+    "AZ": "AZN",
+    "BA": "BAM",
+    "BB": "BBD",
+    "BD": "BDT",
+    "BE": "EUR",
+    "BF": "XOF",
+    "BG": "BGN",
+    "BH": "BHD",
+    "BI": "BIF",
+    "BJ": "XOF",
+    "BL": "EUR",
+    "BM": "BMD",
+    "BN": "BND",
+    "BO": "BOB",
+    "BQ": "USD",
+    "BR": "BRL",
+    "BS": "BSD",
+    "BT": "INR",
+    "BV": "NOK",
+    "BW": "BWP",
+    "BY": "BYN",
+    "BZ": "BZD",
+    "CA": "CAD",
+    "CC": "AUD",
+    "CD": "CDF",
+    "CF": "XAF",
+    "CG": "XAF",
+    "CH": "CHF",
+    "CI": "XOF",
+    "CK": "NZD",
+    "CL": "CLP",
+    "CM": "XAF",
+    "CN": "CNY",
+    "CO": "COP",
+    "CR": "CRC",
+    "CU": "CUP",
+    "CV": "CVE",
+    "CW": "XCG",
+    "CX": "AUD",
+    "CY": "EUR",
+    "CZ": "CZK",
+    "DE": "EUR",
+    "DJ": "DJF",
+    "DK": "DKK",
+    "DM": "XCD",
+    "DO": "DOP",
+    "DZ": "DZD",
+    "EC": "USD",
+    "EE": "EUR",
+    "EG": "EGP",
+    "EH": "MAD",
+    "ER": "ERN",
+    "ES": "EUR",
+    "ET": "ETB",
+    "FI": "EUR",
+    "FJ": "FJD",
+    "FK": "FKP",
+    "FM": "USD",
+    "FO": "DKK",
+    "FR": "EUR",
+    "GA": "XAF",
+    "GB": "GBP",
+    "GD": "XCD",
+    "GE": "GEL",
+    "GF": "EUR",
+    "GG": "GBP",
+    "GH": "GHS",
+    "GI": "GIP",
+    "GL": "DKK",
+    "GM": "GMD",
+    "GN": "GNF",
+    "GP": "EUR",
+    "GQ": "XAF",
+    "GR": "EUR",
+    "GT": "GTQ",
+    "GU": "USD",
+    "GW": "XOF",
+    "GY": "GYD",
+    "HK": "HKD",
+    "HN": "HNL",
+    "HR": "EUR",
+    "HT": "HTG",
+    "HU": "HUF",
+    "ID": "IDR",
+    "IE": "EUR",
+    "IL": "ILS",
+    "IM": "GBP",
+    "IN": "INR",
+    "IO": "USD",
+    "IQ": "IQD",
+    "IR": "IRR",
+    "IS": "ISK",
+    "IT": "EUR",
+    "JE": "GBP",
+    "JM": "JMD",
+    "JO": "JOD",
+    "JP": "JPY",
+    "KE": "KES",
+    "KG": "KGS",
+    "KH": "KHR",
+    "KI": "AUD",
+    "KM": "KMF",
+    "KN": "XCD",
+    "KP": "KPW",
+    "KR": "KRW",
+    "KW": "KWD",
+    "KY": "KYD",
+    "KZ": "KZT",
+    "LA": "LAK",
+    "LB": "LBP",
+    "LC": "XCD",
+    "LI": "CHF",
+    "LK": "LKR",
+    "LR": "LRD",
+    "LS": "ZAR",
+    "LT": "EUR",
+    "LU": "EUR",
+    "LV": "EUR",
+    "LY": "LYD",
+    "MA": "MAD",
+    "MC": "EUR",
+    "MD": "MDL",
+    "ME": "EUR",
+    "MF": "EUR",
+    "MG": "MGA",
+    "MH": "USD",
+    "MK": "MKD",
+    "ML": "XOF",
+    "MM": "MMK",
+    "MN": "MNT",
+    "MO": "MOP",
+    "MP": "USD",
+    "MQ": "EUR",
+    "MR": "MRU",
+    "MS": "XCD",
+    "MT": "EUR",
+    "MU": "MUR",
+    "MV": "MVR",
+    "MW": "MWK",
+    "MX": "MXN",
+    "MY": "MYR",
+    "MZ": "MZN",
+    "NA": "ZAR",
+    "NE": "XOF",
+    "NF": "AUD",
+    "NG": "NGN",
+    "NI": "NIO",
+    "NL": "EUR",
+    "NO": "NOK",
+    "NP": "NPR",
+    "NR": "AUD",
+    "NU": "NZD",
+    "NZ": "NZD",
+    "OM": "OMR",
+    "PA": "PAB",
+    "PE": "PEN",
+    "PF": "XPF",
+    "PG": "PGK",
+    "PH": "PHP",
+    "PK": "PKR",
+    "PL": "PLN",
+    "PM": "EUR",
+    "PR": "USD",
+    "PS": "ILS",
+    "PT": "EUR",
+    "PW": "USD",
+    "PY": "PYG",
+    "QA": "QAR",
+    "RE": "EUR",
+    "RO": "RON",
+    "RS": "RSD",
+    "RU": "RUB",
+    "RW": "RWF",
+    "SA": "SAR",
+    "SB": "SBD",
+    "SC": "SCR",
+    "SD": "SDG",
+    "SE": "SEK",
+    "SG": "SGD",
+    "SH": "SHP",
+    "SI": "EUR",
+    "SK": "EUR",
+    "SL": "SLE",
+    "SM": "EUR",
+    "SN": "XOF",
+    "SO": "SOS",
+    "SR": "SRD",
+    "SS": "SSP",
+    "ST": "STN",
+    "SV": "USD",
+    "SX": "XCG",
+    "SY": "SYP",
+    "SZ": "SZL",
+    "TC": "USD",
+    "TD": "XAF",
+    "TF": "EUR",
+    "TG": "XOF",
+    "TH": "THB",
+    "TJ": "TJS",
+    "TK": "NZD",
+    "TL": "USD",
+    "TM": "TMT",
+    "TN": "TND",
+    "TO": "TOP",
+    "TR": "TRY",
+    "TT": "TTD",
+    "TV": "AUD",
+    "TW": "TWD",
+    "TZ": "TZS",
+    "UA": "UAH",
+    "UG": "UGX",
+    "UM": "USD",
+    "US": "USD",
+    "UY": "UYU",
+    "UZ": "UZS",
+    "VA": "EUR",
+    "VC": "XCD",
+    "VE": "VES",
+    "VI": "USD",
+    "VN": "VND",
+    "VU": "VUV",
+    "WF": "XPF",
+    "WS": "WST",
+    "XK": "EUR",
+    "YE": "YER",
+    "YT": "EUR",
+    "ZA": "ZAR",
+    "ZM": "ZMW",
+    "ZW": "USD",
+}
 CURRENCY_DATA = {"AED": {"name": "UAE Dirham", "symbol": "د.إ", "decimal_places": 2}, "EGP": {"name": "Egyptian Pound", "symbol": "ج.م", "decimal_places": 2}, "SAR": {"name": "Saudi Riyal", "symbol": "﷼", "decimal_places": 2}, "SDG": {"name": "Sudanese Pound", "symbol": "ج.س", "decimal_places": 2}, "USD": {"name": "United States Dollar", "symbol": "$", "decimal_places": 2}}
 
 
@@ -287,12 +531,6 @@ button {
 اختر الدولة
 </option>
 
-<option value="EG">Egypt</option>
-<option value="SA">Saudi Arabia</option>
-<option value="SD">Sudan</option>
-<option value="AE">United Arab Emirates</option>
-<option value="US">United States</option>
-
 </select>
 
 <label>
@@ -371,45 +609,6 @@ FADL PAY — Sandbox
 </div>
 
 <script>
-
-function updateCurrency() {
-
-    const countryInput =
-        document.getElementById("country");
-
-    const currencyInput =
-        document.getElementById("currency");
-
-    if (!countryInput || !currencyInput) {
-        return;
-    }
-
-    const country =
-        countryInput.value;
-
-    const currencyCode =
-        COUNTRY_CURRENCY[country];
-
-    if (!currencyCode) {
-        currencyInput.value = "";
-        return;
-    }
-
-    const info =
-        CURRENCY_DATA[currencyCode];
-
-    if (info) {
-        currencyInput.value =
-            currencyCode + " — " +
-            info.name + " " +
-            info.symbol;
-    } else {
-        currencyInput.value =
-            currencyCode;
-    }
-}
-
-
 
 async function startPayment() {
 
@@ -990,6 +1189,42 @@ const COUNTRY_CURRENCY = {
     "ZW": "USD"
 };
 
+/* FADL PAY — 243 COUNTRY DROPDOWN INITIALIZER */
+function initializeCountryDropdown() {
+    const countryInput = document.getElementById("country");
+
+    if (!countryInput) {
+        return;
+    }
+
+    const currentValue = countryInput.value;
+
+    countryInput.innerHTML = "";
+
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "اختر الدولة";
+    countryInput.appendChild(placeholder);
+
+    Object.entries(COUNTRY_CURRENCY).forEach(([countryCode, currencyCode]) => {
+        if (countryCode === "AQ" || !currencyCode) {
+            return;
+        }
+
+        const option = document.createElement("option");
+        option.value = countryCode;
+        option.textContent = countryCode;
+        countryInput.appendChild(option);
+    });
+
+    if (currentValue && COUNTRY_CURRENCY[currentValue]) {
+        countryInput.value = currentValue;
+    }
+
+    updateCurrency();
+}
+
+
 
 const SUPPORTED_PAYMENT_CURRENCIES = new Set([
     "AED",
@@ -1154,7 +1389,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (countryInput) {
         countryInput.addEventListener("change", updateCurrency);
-        updateCurrency();
+        initializeCountryDropdown();
     }
 });
 </script>
