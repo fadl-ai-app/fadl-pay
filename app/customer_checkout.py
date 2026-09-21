@@ -1213,7 +1213,16 @@ function initializeCountryDropdown() {
 
         const option = document.createElement("option");
         option.value = countryCode;
-        option.textContent = countryCode;
+
+        const countryName = new Intl.DisplayNames(
+            ["ar"],
+            { type: "region" }
+        ).of(countryCode);
+
+        option.textContent = countryName
+            ? `${countryName} — ${countryCode}`
+            : countryCode;
+
         countryInput.appendChild(option);
     });
 
