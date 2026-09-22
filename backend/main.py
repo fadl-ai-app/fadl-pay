@@ -66,7 +66,6 @@ app.include_router(
 # /pay + /pay/create
 # ============================================================
 
-app.include_router(customer_checkout_router)
 
 
 
@@ -110,18 +109,29 @@ async def admin_redirect():
 # يجب أن يسبق root حتى لا تلتقط واجهة الدفع مسار /admin
 # ============================================================
 
-app = gr.mount_gradio_app(
+gr.mount_gradio_app(
     app,
     financial_admin_demo,
     path="/admin",
 )
 
 # ============================================================
+
+# ============================================================
+# CUSTOMER CHECKOUT
+# /pay + /pay/create
+#
+# Register checkout BEFORE the root payment UI mount so the
+# root Gradio UI cannot intercept /pay.
+# ============================================================
+
+app.include_router(customer_checkout_router)
+
 # PAYMENT UI
 # الصفحة الرئيسية /
 # ============================================================
 
-app = gr.mount_gradio_app(
+gr.mount_gradio_app(
     app,
     demo,
     path="/",
