@@ -7,12 +7,15 @@ Sandbox / Prototype
 """
 
 import gradio as gr
-from fastapi import FastAPI, Cookie, HTTPException
+from fastapi import FastAPI, Cookie, HTTPException, Depends
 
 from database.database import initialize_database
 from backend.api import app as api_app
 from backend.merchant_api_login import router as merchant_api_login_router
-from backend.merchant_auth_routes import router as merchant_auth_router
+from backend.merchant_auth_routes import (
+    get_session,
+    router as merchant_auth_router,
+)
 from app.financial_admin_ui import financial_admin_demo
 from app.merchant_dashboard import dashboard_data_from_session
 from app.merchant_login import (
@@ -154,7 +157,44 @@ gr.mount_gradio_app(
 # root Gradio UI cannot intercept /pay.
 # ============================================================
 
-app.include_router(customer_checkout_router)
+# =============================================================================
+# 🔐 CUSTOMER CHECKOUT AUTH BOUNDARY
+# =============================================================================
+# All /pay routes require a valid merchant server-side session.
+# This dependency is applied at router level so it covers:
+#   GET  /pay
+#   POST /pay/create
+#   POST /pay/sandbox/status
+#
+# No UI changes.
+# No database changes.
+# =============================================================================
+
+def require_merchant_session(
+    fadl_merchant_session: str | None = Cookie(default=None),
+):
+    if not fadl_merchant_session:
+        raise HTTPException(
+            status_code=401,
+            detail="Merchant authentication required",
+        )
+
+    session = get_session(fadl_merchant_session)
+
+    if session is None:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or expired merchant session",
+        )
+
+    return session
+
+
+app.include_router(
+    customer_checkout_router,
+    dependencies=[Depends(require_merchant_session)],
+)
+
 
 # ================================================================
 # 🌿 FADL PAY — MINI ISLAMIC HOME GATEWAY
@@ -165,312 +205,139 @@ from fastapi.responses import HTMLResponse
 
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
 async def fadl_pay_home():
-    return """
+    return HTMLResponse(
+        content="""
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
-
-    <title>FADL PAY</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مرحبًا بك في FADL PAY</title>
 
     <style>
-
         * {
             box-sizing: border-box;
         }
 
-        html,
         body {
             margin: 0;
-            min-height: 100%;
-        }
-
-        body {
             min-height: 100vh;
-
             display: flex;
             align-items: center;
             justify-content: center;
-
-            padding: 18px;
-
+            background:
+                radial-gradient(circle at top, #f2fff7 0%, #e8f7ee 45%, #dcefe4 100%);
             font-family:
                 "Segoe UI",
                 Tahoma,
                 Arial,
                 sans-serif;
-
-            color: #ffffff;
-
-            background:
-                radial-gradient(
-                    circle at 50% 0%,
-                    rgba(212,175,55,.12),
-                    transparent 42%
-                ),
-                #073b2a;
+            color: #173b2a;
+            padding: 24px;
         }
 
-        /* زخرفة هندسية إسلامية خفيفة */
-
-        body::before {
-            content: "";
-
-            position: fixed;
-            inset: 0;
-
-            pointer-events: none;
-
-            opacity: .045;
-
-            background-image:
-                linear-gradient(
-                    30deg,
-                    #d4af37 12%,
-                    transparent 12.5%,
-                    transparent 87%,
-                    #d4af37 87.5%
-                ),
-                linear-gradient(
-                    150deg,
-                    #d4af37 12%,
-                    transparent 12.5%,
-                    transparent 87%,
-                    #d4af37 87.5%
-                );
-
-            background-size: 52px 90px;
-        }
-
-        .gateway {
-            position: relative;
-            z-index: 1;
-
-            width: min(650px, 100%);
-
-            padding: 27px 24px 21px;
-
-            border-radius: 23px;
-
-            border: 1px solid
-                rgba(212,175,55,.38);
-
-            background:
-                linear-gradient(
-                    145deg,
-                    rgba(15,82,58,.98),
-                    rgba(5,48,34,.98)
-                );
-
-            box-shadow:
-                0 22px 60px rgba(0,0,0,.28),
-                inset 0 1px 0
-                    rgba(255,255,255,.08);
-        }
-
-        .brand {
+        .card {
+            width: min(520px, 100%);
+            background: rgba(255, 255, 255, 0.96);
+            border: 1px solid rgba(37, 110, 72, 0.14);
+            border-radius: 28px;
+            padding: 42px 30px;
             text-align: center;
-            margin-bottom: 22px;
+            box-shadow:
+                0 20px 60px rgba(27, 83, 53, 0.14);
         }
 
-        .icon {
-            font-size: 28px;
-            margin-bottom: 3px;
+        .mark {
+            width: 76px;
+            height: 76px;
+            margin: 0 auto 20px;
+            border-radius: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #176b45;
+            color: white;
+            font-size: 34px;
+            box-shadow: 0 10px 24px rgba(23, 107, 69, 0.22);
         }
 
-        .name {
-            font-size: 24px;
+        h1 {
+            margin: 0 0 12px;
+            font-size: 30px;
             font-weight: 800;
-            letter-spacing: .4px;
         }
 
         .subtitle {
-            margin-top: 5px;
-            font-size: 12px;
-            opacity: .72;
+            margin: 0 auto 30px;
+            color: #52705f;
+            font-size: 17px;
+            line-height: 1.8;
         }
 
-        .choices {
-            display: grid;
-
-            grid-template-columns:
-                repeat(2, minmax(0, 1fr));
-
-            gap: 13px;
+        .protection {
+            margin: 0 0 24px;
+            padding: 14px 16px;
+            border-radius: 16px;
+            background: #f1faf5;
+            color: #28583f;
+            font-size: 14px;
+            line-height: 1.7;
         }
 
-        .choice {
-            min-height: 108px;
-
-            display: flex;
-            flex-direction: column;
-
+        .button {
+            display: inline-flex;
             align-items: center;
             justify-content: center;
-
+            width: 100%;
+            min-height: 54px;
+            border-radius: 16px;
+            background: #176b45;
+            color: white;
             text-decoration: none;
-            color: #ffffff;
-
-            border-radius: 17px;
-
-            background:
-                rgba(255,255,255,.07);
-
-            border:
-                1px solid
-                rgba(255,255,255,.10);
-
-            transition:
-                transform .18s ease,
-                background .18s ease,
-                border-color .18s ease;
-        }
-
-        .choice:hover {
-            transform: translateY(-3px);
-
-            background:
-                rgba(255,255,255,.115);
-
-            border-color:
-                rgba(212,175,55,.65);
-        }
-
-        .choice-icon {
-            font-size: 29px;
-            margin-bottom: 8px;
-        }
-
-        .choice-title {
-            font-size: 16px;
+            font-size: 17px;
             font-weight: 700;
+            transition: transform .15s ease, box-shadow .15s ease;
+            box-shadow: 0 10px 22px rgba(23, 107, 69, 0.20);
         }
 
-        .choice-hint {
-            margin-top: 4px;
-
-            font-size: 10px;
-
-            opacity: .58;
+        .button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 14px 28px rgba(23, 107, 69, 0.25);
         }
 
         .footer {
-            margin-top: 17px;
-
-            text-align: center;
-
-            font-size: 9px;
-
-            opacity: .38;
+            margin-top: 24px;
+            color: #789080;
+            font-size: 12px;
         }
-
-        @media (max-width: 560px) {
-
-            body {
-                padding: 11px;
-            }
-
-            .gateway {
-                padding: 22px 14px 18px;
-                border-radius: 20px;
-            }
-
-            .brand {
-                margin-bottom: 17px;
-            }
-
-            .name {
-                font-size: 21px;
-            }
-
-            .choices {
-                grid-template-columns: 1fr;
-                gap: 9px;
-            }
-
-            .choice {
-                min-height: 82px;
-            }
-
-            .choice-icon {
-                font-size: 25px;
-                margin-bottom: 5px;
-            }
-
-        }
-
     </style>
 </head>
 
 <body>
+    <main class="card">
+        <div class="mark">🌿</div>
 
-    <main class="gateway">
+        <h1>مرحبًا بك في FADL PAY</h1>
 
-        <div class="brand">
+        <p class="subtitle">
+            منصة دفع آمنة وسهلة لإدارة عمليات الدفع والخدمات المالية.
+        </p>
 
-            <div class="icon">💳</div>
-
-            <div class="name">
-                FADL PAY
-            </div>
-
-            <div class="subtitle">
-                اختر الواجهة للدخول
-            </div>
-
+        <div class="protection">
+            🔐 للوصول إلى خدمات FADL PAY،
+            يرجى المرور عبر بوابة الحماية أولًا.
         </div>
 
-
-        <div class="choices">
-
-            <a
-                class="choice"
-                href="/pay"
-            >
-                <div class="choice-icon">
-                    💳
-                </div>
-
-                <div class="choice-title">
-                    واجهة الدفع
-                </div>
-
-                <div class="choice-hint">
-                    الدفع بسهولة وأمان
-                </div>
-            </a>
-
-
-            <a
-                class="choice"
-                href="/admin/"
-            >
-                <div class="choice-icon">
-                    💰
-                </div>
-
-                <div class="choice-title">
-                    الإدارة المالية
-                </div>
-
-                <div class="choice-hint">
-                    إدارة ومتابعة المعاملات
-                </div>
-            </a>
-
-        </div>
-
+        <a class="button" href="/merchant/">
+            🔐 الدخول والمتابعة
+        </a>
 
         <div class="footer">
-            FADL PAY · Sandbox
+            FADL PAY — دفع بسهولة وأمان
         </div>
-
     </main>
-
 </body>
-
 </html>
-"""
+        """,
+        status_code=200,
+    )
