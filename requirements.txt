@@ -2,3 +2,4 @@ fastapi
 uvicorn[standard]
 gradio==6.26.0
 pydantic
+argon2-cffi
