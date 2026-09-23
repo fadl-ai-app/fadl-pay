@@ -91,6 +91,19 @@ def initialize_database():
     # --------------------------------------------------------
     from database.reference_seed import seed_reference_data
 
+    connection.execute(
+        '''
+        CREATE TABLE IF NOT EXISTS merchant_password_setup_tokens (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            merchant_reference TEXT NOT NULL,
+            token_hash TEXT NOT NULL UNIQUE,
+            expires_at TEXT NOT NULL,
+            used_at TEXT,
+            created_at TEXT NOT NULL
+        )
+        '''
+    )
+
     seed_reference_data(connection)
 
     connection.commit()

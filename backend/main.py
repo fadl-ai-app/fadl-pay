@@ -12,8 +12,14 @@ from fastapi import FastAPI, Cookie, HTTPException
 from database.database import initialize_database
 from backend.api import app as api_app
 from backend.merchant_api_login import router as merchant_api_login_router
+from backend.merchant_auth_routes import router as merchant_auth_router
 from app.financial_admin_ui import financial_admin_demo
 from app.merchant_dashboard import dashboard_data_from_session
+from app.merchant_login import (
+    demo as merchant_login_demo,
+    LOGIN_UI_CSS,
+    LOGIN_UI_JS,
+)
 from app.customer_checkout import router as customer_checkout_router
 
 
@@ -59,6 +65,10 @@ app.include_router(
     merchant_api_login_router,
 )
 
+app.include_router(
+    merchant_auth_router,
+)
+
 
 # ============================================================
 # CUSTOMER CHECKOUT
@@ -94,6 +104,26 @@ def merchant_dashboard(
             status_code=401,
             detail=str(exc),
         )
+
+# ============================================================
+# MERCHANT LOGIN UI
+# /merchant
+#
+# The existing FastAPI merchant auth endpoints remain under:
+# /merchant/login
+# /merchant/me
+# /merchant/logout
+#
+# Gradio provides only the browser login interface.
+# ============================================================
+
+gr.mount_gradio_app(
+    app,
+    merchant_login_demo,
+    path="/merchant",
+    css=LOGIN_UI_CSS,
+    js=LOGIN_UI_JS,
+)
 
 # ============================================================
 # Redirect /admin → /admin/
