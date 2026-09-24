@@ -192,7 +192,6 @@ def require_merchant_session(
 
 app.include_router(
     customer_checkout_router,
-    dependencies=[Depends(require_merchant_session)],
 )
 
 
