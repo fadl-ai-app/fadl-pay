@@ -64,6 +64,135 @@ body {
 
 
 LOGIN_UI_JS = r"""
+async function fadlMerchantRegistration() {
+    const nameEl = document.querySelector(
+        "#fadl-merchant-register-name textarea, #fadl-merchant-register-name input"
+    );
+
+    const emailEl = document.querySelector(
+        "#fadl-merchant-register-email textarea, #fadl-merchant-register-email input"
+    );
+
+    const passwordEl = document.querySelector(
+        "#fadl-merchant-register-password textarea, #fadl-merchant-register-password input"
+    );
+
+    const statusEl = document.querySelector(
+        "#fadl-register-status"
+    );
+
+    const name = nameEl ? nameEl.value.trim() : "";
+    const email = emailEl ? emailEl.value.trim() : "";
+    const password = passwordEl ? passwordEl.value : "";
+
+    if (!name || !email || !password) {
+        if (statusEl) {
+            statusEl.innerText =
+                "يرجى إدخال الاسم والبريد الإلكتروني وكلمة المرور.";
+            statusEl.className = "fadl-login-error";
+        }
+        return;
+    }
+
+    if (password.length < 8) {
+        if (statusEl) {
+            statusEl.innerText =
+                "كلمة المرور يجب أن تحتوي على 8 أحرف على الأقل.";
+            statusEl.className = "fadl-login-error";
+        }
+        return;
+    }
+
+    if (statusEl) {
+        statusEl.innerText = "جاري إنشاء الحساب...";
+        statusEl.className = "";
+    }
+
+    try {
+        const csrfResponse = await fetch(
+            "/merchant/register-csrf",
+            {
+                method: "GET",
+                credentials: "include"
+            }
+        );
+
+        let csrfData = {};
+
+        try {
+            csrfData = await csrfResponse.json();
+        } catch (_) {
+            csrfData = {};
+        }
+
+        if (!csrfResponse.ok || !csrfData.csrf_token) {
+            throw new Error("CSRF initialization failed");
+        }
+
+        const response = await fetch(
+            "/merchant/register",
+            {
+                method: "POST",
+                credentials: "include",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-Token": csrfData.csrf_token
+                },
+                body: JSON.stringify({
+                    name: name,
+                    email: email,
+                    password: password
+                })
+            }
+        );
+
+        let data = {};
+
+        try {
+            data = await response.json();
+        } catch (_) {
+            data = {};
+        }
+
+        if (!response.ok) {
+            if (statusEl) {
+                statusEl.innerText =
+                    data.detail ||
+                    "تعذر إنشاء الحساب. تحقق من البيانات وحاول مرة أخرى.";
+                statusEl.className = "fadl-login-error";
+            }
+            return;
+        }
+
+        if (statusEl) {
+            statusEl.innerText =
+                "تم إنشاء حساب التاجر بنجاح. يمكنك الآن تسجيل الدخول.";
+            statusEl.className = "fadl-login-success";
+        }
+
+        if (emailEl) {
+            emailEl.value = email;
+        }
+
+        if (passwordEl) {
+            passwordEl.value = "";
+        }
+
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth"
+        });
+
+    } catch (error) {
+        if (statusEl) {
+            statusEl.innerText =
+                "تعذر الاتصال بالخادم. حاول مرة أخرى.";
+            statusEl.className = "fadl-login-error";
+        }
+    }
+}
+
+
 async function fadlMerchantLogin() {
     const emailEl = document.querySelector(
         "#fadl-merchant-email textarea, #fadl-merchant-email input"
@@ -216,6 +345,61 @@ def create_merchant_login_demo():
             login_button = gr.Button(
                 "تسجيل الدخول",
                 variant="primary",
+            )
+
+            gr.Markdown(
+                """
+                ---
+                ## 🆕 إنشاء حساب تاجر
+
+                أنشئ حسابًا جديدًا للوصول إلى خدمات FADL PAY.
+                """
+            )
+
+            register_name = gr.Textbox(
+                label="اسم التاجر",
+                placeholder="اسم المتجر أو الشركة",
+                elem_id="fadl-merchant-register-name",
+            )
+
+            register_email = gr.Textbox(
+                label="البريد الإلكتروني",
+                placeholder="merchant@example.com",
+                elem_id="fadl-merchant-register-email",
+                type="email",
+            )
+
+            register_password = gr.Textbox(
+                label="كلمة المرور",
+                placeholder="8 أحرف على الأقل",
+                elem_id="fadl-merchant-register-password",
+                type="password",
+            )
+
+            gr.HTML(
+                """
+                <div
+                    id="fadl-register-status"
+                    class="fadl-login-error"
+                    aria-live="polite"
+                ></div>
+                """
+            )
+
+            register_button = gr.Button(
+                "إنشاء حساب التاجر",
+                variant="secondary",
+            )
+
+            register_button.click(
+                fn=None,
+                inputs=[
+                    register_name,
+                    register_email,
+                    register_password,
+                ],
+                outputs=[],
+                js="fadlMerchantRegistration",
             )
 
             login_button.click(
