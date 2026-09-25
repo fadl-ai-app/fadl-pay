@@ -394,175 +394,207 @@ def create_dashboard(session_token=None):
     if not session_token:
         raise PermissionError("Authentication required")
 
+    # --------------------------------------------------------
+    # Keep the existing authenticated server-side session flow.
+    # No client-provided merchant identity is trusted here.
+    # --------------------------------------------------------
     data = create_dashboard_from_session(session_token)
 
     # --------------------------------------------------------
-    # Prepare read-only display strings
-    # --------------------------------------------------------
-
-    currency = (
-        data["currency_breakdown"][0]["currency"]
-        if data["currency_breakdown"]
-        else ""
-    )
-
-    total_amount = _fmt_amount(
-        data["total_amount"],
-        currency,
-    )
-
-    collected_amount = _fmt_amount(
-        data["collected_amount"],
-        currency,
-    )
-
-    pending_amount = _fmt_amount(
-        data["pending_amount"],
-        currency,
-    )
-
-    status_table = _build_status_markdown(
-        data["status_breakdown"]
-    )
-
-    currency_table = _build_currency_markdown(
-        data["currency_breakdown"]
-    )
-
-    payment_method_table = _build_payment_method_markdown(
-        data["payment_method_breakdown"]
-    )
-
-    recent_transactions_table = _build_recent_transactions_markdown(
-        data["recent_transactions"]
-    )
-
-    # --------------------------------------------------------
-    # Gradio display
+    # Green merchant gateway
+    #
+    # This is display/navigation only.
+    # No database writes.
+    # No auth/session changes.
+    # Existing /pay and /admin/ routes are untouched.
     # --------------------------------------------------------
 
     with gr.Blocks(
-        title="FADL PAY — لوحة تحكم التاجر"
+        title="FADL PAY — بوابة التاجر",
+        css="""
+        .fadl-gateway {
+            min-height: 72vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 28px 16px;
+            direction: rtl;
+            font-family: Arial, Tahoma, sans-serif;
+        }
+
+        .fadl-card {
+            width: min(720px, 100%);
+            background: linear-gradient(145deg, #ffffff 0%, #f7fff9 100%);
+            border: 1px solid rgba(22, 101, 52, 0.14);
+            border-radius: 28px;
+            padding: 38px 30px;
+            box-shadow: 0 18px 50px rgba(20, 83, 45, 0.12);
+            text-align: center;
+        }
+
+        .fadl-logo {
+            width: 72px;
+            height: 72px;
+            margin: 0 auto 16px;
+            border-radius: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #166534, #15803d);
+            color: white;
+            font-size: 34px;
+            box-shadow: 0 10px 24px rgba(21, 128, 61, 0.25);
+        }
+
+        .fadl-title {
+            color: #14532d;
+            font-size: 34px;
+            font-weight: 800;
+            margin: 0;
+        }
+
+        .fadl-subtitle {
+            color: #4b6354;
+            font-size: 17px;
+            margin: 10px 0 26px;
+        }
+
+        .fadl-merchant {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 18px;
+            padding: 15px 18px;
+            margin-bottom: 24px;
+            color: #166534;
+            line-height: 1.9;
+        }
+
+        .fadl-actions {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+            margin-top: 10px;
+        }
+
+        .fadl-action {
+            display: flex;
+            min-height: 145px;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 9px;
+            padding: 22px 16px;
+            border-radius: 22px;
+            text-decoration: none !important;
+            transition: transform .18s ease, box-shadow .18s ease;
+            box-sizing: border-box;
+        }
+
+        .fadl-action:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 28px rgba(20, 83, 45, 0.16);
+        }
+
+        .fadl-pay {
+            background: linear-gradient(135deg, #166534, #15803d);
+            color: white !important;
+        }
+
+        .fadl-admin {
+            background: white;
+            color: #166534 !important;
+            border: 2px solid #86efac;
+        }
+
+        .fadl-icon {
+            font-size: 34px;
+        }
+
+        .fadl-action-title {
+            font-size: 20px;
+            font-weight: 800;
+        }
+
+        .fadl-action-desc {
+            font-size: 13px;
+            opacity: .82;
+        }
+
+        .fadl-footer {
+            margin-top: 25px;
+            color: #718096;
+            font-size: 12px;
+        }
+
+        @media (max-width: 620px) {
+            .fadl-card {
+                padding: 30px 18px;
+                border-radius: 22px;
+            }
+
+            .fadl-title {
+                font-size: 29px;
+            }
+
+            .fadl-actions {
+                grid-template-columns: 1fr;
+            }
+        }
+        """
     ) as demo:
 
-        gr.Markdown(
+        gr.HTML(
+            f"""
+            <div class="fadl-gateway">
+                <div class="fadl-card">
+
+                    <div class="fadl-logo">💳</div>
+
+                    <h1 class="fadl-title">FADL PAY</h1>
+
+                    <div class="fadl-subtitle">
+                        بوابة التاجر
+                    </div>
+
+                    <div class="fadl-merchant">
+                        <strong>👤 {data["merchant"]}</strong><br>
+                        {data["email"]}<br>
+                        <span>🟢 الحساب نشط</span>
+                    </div>
+
+                    <div class="fadl-actions">
+
+                        <a
+                            class="fadl-action fadl-pay"
+                            href="/pay?v=7fe68562"
+                        >
+                            <div class="fadl-icon">💳</div>
+                            <div class="fadl-action-title">واجهة الدفع</div>
+                            <div class="fadl-action-desc">
+                                فتح واجهة الدفع للعملاء
+                            </div>
+                        </a>
+
+                        <a
+                            class="fadl-action fadl-admin"
+                            href="/admin/"
+                        >
+                            <div class="fadl-icon">📊</div>
+                            <div class="fadl-action-title">الإدارة المالية</div>
+                            <div class="fadl-action-desc">
+                                متابعة العمليات والبيانات المالية
+                            </div>
+                        </a>
+
+                    </div>
+
+                    <div class="fadl-footer">
+                        FADL PAY — بوابة التاجر الآمنة
+                    </div>
+
+                </div>
+            </div>
             """
-# 🏪 FADL PAY
-## لوحة تحكم التاجر
-
-لوحة مالية للقراءة فقط
-"""
         )
-
-        # ----------------------------------------------------
-        # Merchant information
-        # ----------------------------------------------------
-
-        gr.Markdown("## 👤 بيانات التاجر")
-
-        gr.Markdown(
-            f"""
-**التاجر:** {data["merchant"]}
-
-**Merchant Reference:** `{data["merchant_reference"]}`
-
-**البريد الإلكتروني:** {data["email"]}
-
-**الحالة:** 🟢 {data["status"]}
-"""
-        )
-
-        gr.Markdown("---")
-
-        # ----------------------------------------------------
-        # Financial summary
-        # ----------------------------------------------------
-
-        gr.Markdown("## 📊 الملخص المالي")
-
-        with gr.Row():
-
-            with gr.Column():
-                gr.Markdown(
-                    f"""
-### 💳 العمليات
-## {data["transactions"]}
-"""
-                )
-
-            with gr.Column():
-                gr.Markdown(
-                    f"""
-### 💰 إجمالي القيمة
-## {total_amount}
-"""
-                )
-
-            with gr.Column():
-                gr.Markdown(
-                    f"""
-### ✅ المحصل
-## {collected_amount}
-"""
-                )
-
-            with gr.Column():
-                gr.Markdown(
-                    f"""
-### ⏳ المعلّق
-## {pending_amount}
-"""
-                )
-
-        gr.Markdown("---")
-
-        # ----------------------------------------------------
-        # System counters
-        # ----------------------------------------------------
-
-        gr.Markdown("## 🔐 السجل التشغيلي")
-
-        gr.Markdown(
-            f"""
-- 📒 **Ledger entries:** {data["ledger"]}
-- 🔔 **Transaction events:** {data["events"]}
-"""
-        )
-
-        gr.Markdown("---")
-
-        # ----------------------------------------------------
-        # Status breakdown
-        # ----------------------------------------------------
-
-        gr.Markdown("## 📈 توزيع العمليات حسب الحالة")
-
-        gr.Markdown(status_table)
-
-        # ----------------------------------------------------
-        # Currency breakdown
-        # ----------------------------------------------------
-
-        gr.Markdown("## 💱 توزيع العملات")
-
-        gr.Markdown(currency_table)
-
-        # ----------------------------------------------------
-        # Payment methods
-        # ----------------------------------------------------
-
-        gr.Markdown("## 💳 طرق الدفع")
-
-        gr.Markdown(payment_method_table)
-
-        gr.Markdown("---")
-
-        # ----------------------------------------------------
-        # Recent transactions
-        # ----------------------------------------------------
-
-        gr.Markdown("## 🧾 آخر العمليات")
-
-        gr.Markdown(recent_transactions_table)
 
     return demo

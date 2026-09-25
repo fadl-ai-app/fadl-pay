@@ -98,9 +98,201 @@ def merchant_dashboard(
         )
 
     try:
-        return dashboard_data_from_session(
+        data = dashboard_data_from_session(
             fadl_merchant_session
         )
+
+        merchant_name = str(data.get("name") or "التاجر")
+        merchant_email = str(data.get("email") or "")
+        merchant_reference = str(
+            data.get("merchant_reference") or ""
+        )
+
+        html = f"""
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FADL PAY — بوابة التاجر</title>
+
+<style>
+* {{
+    box-sizing: border-box;
+}}
+
+body {{
+    margin: 0;
+    min-height: 100vh;
+    font-family: Arial, Tahoma, sans-serif;
+    background:
+        radial-gradient(circle at top right, #dcfce7 0, transparent 35%),
+        linear-gradient(135deg, #f0fdf4, #ffffff 55%, #ecfdf5);
+    color: #14532d;
+}}
+
+.gateway {{
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 28px 16px;
+}}
+
+.card {{
+    width: min(720px, 100%);
+    background: rgba(255,255,255,.96);
+    border: 1px solid #bbf7d0;
+    border-radius: 30px;
+    padding: 38px 30px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(20,83,45,.14);
+}}
+
+.logo {{
+    width: 76px;
+    height: 76px;
+    margin: 0 auto 16px;
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg,#166534,#15803d);
+    color: white;
+    font-size: 36px;
+    box-shadow: 0 10px 25px rgba(21,128,61,.25);
+}}
+
+h1 {{
+    margin: 0;
+    font-size: 34px;
+    font-weight: 800;
+    color: #14532d;
+}}
+
+.subtitle {{
+    margin: 10px 0 24px;
+    color: #4b6354;
+    font-size: 17px;
+}}
+
+.merchant {{
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 18px;
+    padding: 14px 18px;
+    margin-bottom: 24px;
+    line-height: 1.9;
+}}
+
+.actions {{
+    display: grid;
+    grid-template-columns: repeat(2,minmax(0,1fr));
+    gap: 16px;
+}}
+
+.action {{
+    min-height: 150px;
+    border-radius: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 10px;
+    text-decoration: none;
+    font-size: 20px;
+    font-weight: 800;
+    transition: .18s ease;
+}}
+
+.action:hover {{
+    transform: translateY(-3px);
+    box-shadow: 0 12px 28px rgba(20,83,45,.16);
+}}
+
+.pay {{
+    background: linear-gradient(135deg,#166534,#15803d);
+    color: white;
+}}
+
+.admin {{
+    background: white;
+    color: #166534;
+    border: 2px solid #86efac;
+}}
+
+.icon {{
+    font-size: 36px;
+}}
+
+.footer {{
+    margin-top: 24px;
+    color: #6b806f;
+    font-size: 13px;
+}}
+
+@media (max-width: 620px) {{
+    .actions {{
+        grid-template-columns: 1fr;
+    }}
+
+    .card {{
+        padding: 30px 18px;
+    }}
+
+    h1 {{
+        font-size: 29px;
+    }}
+}}
+</style>
+</head>
+
+<body>
+<div class="gateway">
+<div class="card">
+
+    <div class="logo">💳</div>
+
+    <h1>FADL PAY</h1>
+
+    <div class="subtitle">
+        بوابة التاجر
+    </div>
+
+    <div class="merchant">
+        <strong>{merchant_name}</strong><br>
+        {merchant_email}<br>
+        <span>رقم التاجر: {merchant_reference}</span>
+    </div>
+
+    <div class="actions">
+
+        <a class="action pay"
+           href="/pay?v=7fe68562">
+            <span class="icon">💳</span>
+            <span>واجهة الدفع</span>
+        </a>
+
+        <a class="action admin"
+           href="/admin/">
+            <span class="icon">📊</span>
+            <span>الإدارة المالية</span>
+        </a>
+
+    </div>
+
+    <div class="footer">
+        اختر الخدمة التي تريد الوصول إليها
+    </div>
+
+</div>
+</div>
+</body>
+</html>
+"""
+
+        from starlette.responses import HTMLResponse
+        return HTMLResponse(content=html)
 
     except PermissionError as exc:
         raise HTTPException(
