@@ -1,7 +1,7 @@
 # FADL PAY — General Integration Layer Contract V1
 
-**Status:** Design Contract — Not Implemented
-**Scope:** Provider-neutral General Integration Layer
+**Status:** Design Contract — Not Implemented  
+**Scope:** Provider-neutral General Integration Layer  
 **Implementation:** Not authorized by this document alone
 
 ---

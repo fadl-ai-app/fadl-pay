@@ -8,14 +8,15 @@ Sandbox / Prototype
 """
 
 import gradio as gr
-from fastapi import FastAPI, Cookie, HTTPException
+from fastapi import FastAPI, Cookie, HTTPException, Request
 
 from database.database import initialize_database
 from backend.api import app as api_app
 from backend.merchant_api_login import router as merchant_api_login_router
 from backend.merchant_auth_routes import router as merchant_auth_router
 from app.financial_admin_ui import financial_admin_demo
-from app.merchant_dashboard import dashboard_data_from_session
+from app.merchant_dashboard import create_dashboard
+from security.merchant_session import get_session_merchant
 from app.merchant_login import (
     demo as merchant_login_demo,
     LOGIN_UI_CSS,
@@ -87,26 +88,39 @@ app.include_router(
 # API Key → Merchant Session → Dashboard
 # ============================================================
 
-@app.get("/merchant/dashboard")
-def merchant_dashboard(
-    fadl_merchant_session: str | None = Cookie(default=None),
+def merchant_dashboard_auth_dependency(
+    request: Request,
 ):
-    if not fadl_merchant_session:
-        raise HTTPException(
-            status_code=401,
-            detail="Merchant authentication required",
-        )
+    """
+    Protect the merchant Dashboard Gradio mount.
+
+    The existing HttpOnly session cookie remains the sole
+    authentication source. No new session or authentication
+    mechanism is introduced here.
+    """
+    session_token = request.cookies.get(
+        "fadl_merchant_session"
+    )
+
+    if not session_token:
+        return None
 
     try:
-        return dashboard_data_from_session(
-            fadl_merchant_session
-        )
+        get_session_merchant(session_token)
+        return session_token
 
-    except PermissionError as exc:
-        raise HTTPException(
-            status_code=401,
-            detail=str(exc),
-        )
+    except PermissionError:
+        return None
+
+
+merchant_dashboard_demo = create_dashboard()
+
+gr.mount_gradio_app(
+    app,
+    merchant_dashboard_demo,
+    path="/merchant/dashboard",
+    auth_dependency=merchant_dashboard_auth_dependency,
+)
 
 # ============================================================
 # MERCHANT LOGIN UI
@@ -461,6 +475,25 @@ async def fadl_pay_home():
 
                 <div class="choice-hint">
                     إدارة ومتابعة المعاملات
+                </div>
+            </a>
+
+
+
+            <a
+                class="choice"
+                href="/merchant/"
+            >
+                <div class="choice-icon">
+                    🏪
+                </div>
+
+                <div class="choice-title">
+                    دخول التاجر
+                </div>
+
+                <div class="choice-hint">
+                    تسجيل الدخول وإدارة الحساب
                 </div>
             </a>
 

@@ -2,12 +2,15 @@
 from pathlib import Path
 import sqlite3
 
-from fastapi import APIRouter, Header, HTTPException
+from fastapi import APIRouter, Header, HTTPException, Depends
+from fastapi.security import HTTPBearer
 from pydantic import BaseModel
 from typing import Optional
 
 from integration_v2.runtime_core import authorize
 
+
+integration_bearer = HTTPBearer(auto_error=False)
 
 router = APIRouter(
     prefix="/api/v1/integrations",
@@ -118,7 +121,7 @@ def _engine_error(exc):
     ) from exc
 
 
-@router.post("/transactions")
+@router.post("/transactions", dependencies=[Depends(integration_bearer)])
 def create_integration_transaction(
     request: IntegrationTransactionRequest,
     authorization: Optional[str] = Header(default=None),
@@ -195,7 +198,7 @@ def create_integration_transaction(
         _engine_error(exc)
 
 
-@router.get("/transactions/{transaction_reference}")
+@router.get("/transactions/{transaction_reference}", dependencies=[Depends(integration_bearer)])
 def read_integration_transaction(
     transaction_reference: str,
     authorization: Optional[str] = Header(default=None),
@@ -258,7 +261,8 @@ def read_integration_transaction(
 
 
 @router.post(
-    "/transactions/{transaction_reference}/sandbox/status"
+    "/transactions/{transaction_reference}/sandbox/status",
+    dependencies=[Depends(integration_bearer)],
 )
 def update_integration_sandbox_status(
     transaction_reference: str,

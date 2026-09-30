@@ -1,8 +1,8 @@
 # FADL PAY — General Integration API Contract V1
 
-**Status:** DESIGN-ONLY / NOT IMPLEMENTED
-**Version:** V1
-**Provider model:** Provider-neutral
+**Status:** DESIGN-ONLY / NOT IMPLEMENTED  
+**Version:** V1  
+**Provider model:** Provider-neutral  
 **Authority:** General Integration Contract V1 + Integration Database Schema Contract V1 + Authentication & Authorization Contract V1
 
 ---

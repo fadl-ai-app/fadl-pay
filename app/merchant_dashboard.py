@@ -1,5 +1,6 @@
 import sqlite3
 import gradio as gr
+from security.api_keys import create_api_key
 
 import database.database as db_module
 from security.merchant_session import get_session_merchant
@@ -389,212 +390,357 @@ def _build_recent_transactions_markdown(rows):
     return "\n".join(lines)
 
 
-def create_dashboard(session_token=None):
 
-    if not session_token:
-        raise PermissionError("Authentication required")
+def create_dashboard():
 
-    # --------------------------------------------------------
-    # Keep the existing authenticated server-side session flow.
-    # No client-provided merchant identity is trusted here.
-    # --------------------------------------------------------
-    data = create_dashboard_from_session(session_token)
+    # ----------------------------------------------------------------------------------------------------------
+    # Runtime loader
+    # ----------------------------------------------------------------------------------------------------------
 
-    # --------------------------------------------------------
-    # Green merchant gateway
-    #
-    # This is display/navigation only.
-    # No database writes.
-    # No auth/session changes.
-    # Existing /pay and /admin/ routes are untouched.
-    # --------------------------------------------------------
+    def load_dashboard(request: gr.Request):
+
+        session_token = getattr(
+            request,
+            "username",
+            None,
+        )
+
+        if not session_token:
+            raise PermissionError(
+                "Authentication required"
+            )
+
+        data = create_dashboard_from_session(
+            session_token
+        )
+
+        currency = (
+            data["currency_breakdown"][0]["currency"]
+            if data["currency_breakdown"]
+            else ""
+        )
+
+        total_amount = _fmt_amount(
+            data["total_amount"],
+            currency,
+        )
+
+        collected_amount = _fmt_amount(
+            data["collected_amount"],
+            currency,
+        )
+
+        pending_amount = _fmt_amount(
+            data["pending_amount"],
+            currency,
+        )
+
+        status_table = _build_status_markdown(
+            data["status_breakdown"]
+        )
+
+        currency_table = _build_currency_markdown(
+            data["currency_breakdown"]
+        )
+
+        payment_method_table = _build_payment_method_markdown(
+            data["payment_method_breakdown"]
+        )
+
+        recent_transactions_table = _build_recent_transactions_markdown(
+            data["recent_transactions"]
+        )
+
+        return (
+            f"""
+# 🏪 FADL PAY
+## لوحة تحكم التاجر
+
+لوحة مالية للقراءة فقط
+
+---
+
+## 👤 بيانات التاجر
+
+**التاجر:** {data["merchant"]}
+
+**Merchant Reference:** `{data["merchant_reference"]}`
+
+**البريد الإلكتروني:** {data["email"]}
+
+**الحالة:** 🟢 {data["status"]}
+
+---
+
+## 📊 الملخص المالي
+""",
+            f"""
+### 💳 العمليات
+## {data["transactions"]}
+""",
+            f"""
+### 💰 إجمالي القيمة
+## {total_amount}
+""",
+            f"""
+### ✅ المحصل
+## {collected_amount}
+""",
+            f"""
+### ⏳ المعلّق
+## {pending_amount}
+""",
+            f"""
+## 🔐 السجل التشغيلي
+
+- 📒 **Ledger entries:** {data["ledger"]}
+- 🔔 **Transaction events:** {data["events"]}
+""",
+            "## 📈 توزيع العمليات حسب الحالة",
+            status_table,
+            "## 💱 توزيع العملات",
+            currency_table,
+            "## 💳 طرق الدفع",
+            payment_method_table,
+            "## 🧾 آخر العمليات",
+            recent_transactions_table,
+        )
+
+    # ------------------------------------------------------------------------------------------------------
+    # API Credentials — one-time secret generation
+    # ------------------------------------------------------------------------------------------------------
+
+    def create_dashboard_api_key(request: gr.Request):
+
+        session_token = getattr(
+            request,
+            "username",
+            None,
+        )
+
+        if not session_token:
+            return (
+                "❌ Authentication required.",
+                "",
+            )
+
+        merchant = get_session_merchant(
+            session_token
+        )
+
+        if not merchant:
+            return (
+                "❌ Merchant session is invalid or expired.",
+                "",
+            )
+
+        merchant_reference = merchant.get(
+            "merchant_reference"
+        )
+
+        if not merchant_reference:
+            return (
+                "❌ Merchant reference is unavailable.",
+                "",
+            )
+
+        try:
+
+            raw_api_key = create_api_key(
+                merchant_reference
+            )
+
+        except Exception as exc:
+
+            return (
+                f"❌ API key creation failed: {exc}",
+                "",
+            )
+
+        return (
+            """
+## ✅ تم إنشاء API Credential
+
+**تنبيه أمني:** المفتاح السري يظهر هنا مرة واحدة فقط.
+لا يتم حفظه في `localStorage` أو `sessionStorage` بواسطة لوحة التحكم.
+
+احفظه الآن في مكان آمن. بعد مغادرة/إعادة تحميل الصفحة لن تتمكن لوحة التحكم من استرجاع المفتاح السري.
+""",
+            raw_api_key,
+        )
+
+    # ----------------------------------------------------------------------------------------------------------
+    # Gradio UI
+    # ----------------------------------------------------------------------------------------------------------
 
     with gr.Blocks(
-        title="FADL PAY — بوابة التاجر",
-        css="""
-        .fadl-gateway {
-            min-height: 72vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 28px 16px;
-            direction: rtl;
-            font-family: Arial, Tahoma, sans-serif;
-        }
-
-        .fadl-card {
-            width: min(720px, 100%);
-            background: linear-gradient(145deg, #ffffff 0%, #f7fff9 100%);
-            border: 1px solid rgba(22, 101, 52, 0.14);
-            border-radius: 28px;
-            padding: 38px 30px;
-            box-shadow: 0 18px 50px rgba(20, 83, 45, 0.12);
-            text-align: center;
-        }
-
-        .fadl-logo {
-            width: 72px;
-            height: 72px;
-            margin: 0 auto 16px;
-            border-radius: 22px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, #166534, #15803d);
-            color: white;
-            font-size: 34px;
-            box-shadow: 0 10px 24px rgba(21, 128, 61, 0.25);
-        }
-
-        .fadl-title {
-            color: #14532d;
-            font-size: 34px;
-            font-weight: 800;
-            margin: 0;
-        }
-
-        .fadl-subtitle {
-            color: #4b6354;
-            font-size: 17px;
-            margin: 10px 0 26px;
-        }
-
-        .fadl-merchant {
-            background: #f0fdf4;
-            border: 1px solid #bbf7d0;
-            border-radius: 18px;
-            padding: 15px 18px;
-            margin-bottom: 24px;
-            color: #166534;
-            line-height: 1.9;
-        }
-
-        .fadl-actions {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 16px;
-            margin-top: 10px;
-        }
-
-        .fadl-action {
-            display: flex;
-            min-height: 145px;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            gap: 9px;
-            padding: 22px 16px;
-            border-radius: 22px;
-            text-decoration: none !important;
-            transition: transform .18s ease, box-shadow .18s ease;
-            box-sizing: border-box;
-        }
-
-        .fadl-action:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 28px rgba(20, 83, 45, 0.16);
-        }
-
-        .fadl-pay {
-            background: linear-gradient(135deg, #166534, #15803d);
-            color: white !important;
-        }
-
-        .fadl-admin {
-            background: white;
-            color: #166534 !important;
-            border: 2px solid #86efac;
-        }
-
-        .fadl-icon {
-            font-size: 34px;
-        }
-
-        .fadl-action-title {
-            font-size: 20px;
-            font-weight: 800;
-        }
-
-        .fadl-action-desc {
-            font-size: 13px;
-            opacity: .82;
-        }
-
-        .fadl-footer {
-            margin-top: 25px;
-            color: #718096;
-            font-size: 12px;
-        }
-
-        @media (max-width: 620px) {
-            .fadl-card {
-                padding: 30px 18px;
-                border-radius: 22px;
-            }
-
-            .fadl-title {
-                font-size: 29px;
-            }
-
-            .fadl-actions {
-                grid-template-columns: 1fr;
-            }
-        }
-        """
+        title="FADL PAY — لوحة تحكم التاجر"
     ) as demo:
 
         gr.HTML(
-            f"""
-            <div class="fadl-gateway">
-                <div class="fadl-card">
+            """
+            <style>
+            :root {
+                --fadl-green-soft: #eef7f1;
+                --fadl-green-pale: #f6fbf7;
+                --fadl-green-border: #cfe5d6;
+                --fadl-green-text: #24543a;
+                --fadl-green-accent: #4f8a68;
+            }
 
-                    <div class="fadl-logo">💳</div>
+            body {
+                direction: rtl;
+            }
 
-                    <h1 class="fadl-title">FADL PAY</h1>
+            .fadl-dashboard {
+                background: var(--fadl-green-pale);
+                border: 1px solid var(--fadl-green-border);
+                border-radius: 22px;
+                padding: 24px;
+            }
 
-                    <div class="fadl-subtitle">
-                        بوابة التاجر
-                    </div>
+            .fadl-dashboard h1,
+            .fadl-dashboard h2,
+            .fadl-dashboard h3 {
+                color: var(--fadl-green-text);
+            }
 
-                    <div class="fadl-merchant">
-                        <strong>👤 {data["merchant"]}</strong><br>
-                        {data["email"]}<br>
-                        <span>🟢 الحساب نشط</span>
-                    </div>
+            .fadl-dashboard .gr-markdown {
+                background: transparent;
+            }
 
-                    <div class="fadl-actions">
-
-                        <a
-                            class="fadl-action fadl-pay"
-                            href="/pay?v=7fe68562"
-                        >
-                            <div class="fadl-icon">💳</div>
-                            <div class="fadl-action-title">واجهة الدفع</div>
-                            <div class="fadl-action-desc">
-                                فتح واجهة الدفع للعملاء
-                            </div>
-                        </a>
-
-                        <a
-                            class="fadl-action fadl-admin"
-                            href="/admin/"
-                        >
-                            <div class="fadl-icon">📊</div>
-                            <div class="fadl-action-title">الإدارة المالية</div>
-                            <div class="fadl-action-desc">
-                                متابعة العمليات والبيانات المالية
-                            </div>
-                        </a>
-
-                    </div>
-
-                    <div class="fadl-footer">
-                        FADL PAY — بوابة التاجر الآمنة
-                    </div>
-
-                </div>
-            </div>
+            .fadl-dashboard-card {
+                background: var(--fadl-green-soft);
+                border: 1px solid var(--fadl-green-border);
+                border-radius: 16px;
+                padding: 16px;
+            }
+            </style>
             """
         )
 
+        with gr.Column(
+            elem_classes=["fadl-dashboard"]
+        ):
+
+            title_md = gr.Markdown(
+                "## 🔐 جاري تحميل لوحة التاجر..."
+            )
+
+            with gr.Row():
+
+                transactions_md = gr.Markdown(
+                    "### 💳 العمليات\n## —"
+                )
+
+                total_md = gr.Markdown(
+                    "### 💰 إجمالي القيمة\n## —"
+                )
+
+                collected_md = gr.Markdown(
+                    "### ✅ المحصل\n## —"
+                )
+
+                pending_md = gr.Markdown(
+                    "### ⏳ المعلّق\n## —"
+                )
+
+            operational_md = gr.Markdown(
+                "## 🔐 السجل التشغيلي\n\nجاري التحميل..."
+            )
+
+            status_title_md = gr.Markdown(
+                "## 📈 توزيع العمليات حسب الحالة"
+            )
+
+            status_md = gr.Markdown(
+                "جاري التحميل..."
+            )
+
+            currency_title_md = gr.Markdown(
+                "## 💱 توزيع العملات"
+            )
+
+            currency_md = gr.Markdown(
+                "جاري التحميل..."
+            )
+
+            payment_title_md = gr.Markdown(
+                "## 💳 طرق الدفع"
+            )
+
+            payment_md = gr.Markdown(
+                "جاري التحميل..."
+            )
+
+            recent_title_md = gr.Markdown(
+                "## 🧾 آخر العمليات"
+            )
+
+            recent_md = gr.Markdown(
+                "جاري التحميل..."
+            )
+
+        # V2.13-D API CREDENTIALS UI
+
+        gr.Markdown(
+            """
+## 🔐 API Credentials
+
+إنشاء مفتاح API جديد للتاجر.
+
+> ⚠️ سيتم عرض المفتاح السري مرة واحدة فقط بعد الإنشاء.
+> لا يتم تخزينه في المتصفح بواسطة لوحة التحكم.
+            """
+        )
+
+        create_api_key_btn = gr.Button(
+            "🔑 إنشاء API Credential جديد",
+            variant="primary",
+        )
+
+        api_key_status_md = gr.Markdown(
+            "لم يتم إنشاء Credential جديد."
+        )
+
+        api_key_once = gr.Textbox(
+            label="🔐 المفتاح السري — يظهر مرة واحدة",
+            value="",
+            interactive=False,
+            type="password",
+        )
+
+        create_api_key_btn.click(
+            fn=create_dashboard_api_key,
+            inputs=None,
+            outputs=[
+                api_key_status_md,
+                api_key_once,
+            ],
+        )
+
+        demo.load(
+            fn=load_dashboard,
+            inputs=None,
+            outputs=[
+                title_md,
+                transactions_md,
+                total_md,
+                collected_md,
+                pending_md,
+                operational_md,
+                status_title_md,
+                status_md,
+                currency_title_md,
+                currency_md,
+                payment_title_md,
+                payment_md,
+                recent_title_md,
+                recent_md,
+            ],
+        )
+
     return demo
+
+
+
