@@ -5,6 +5,171 @@
 from pathlib import Path
 from datetime import datetime, timezone
 import json
+import os
+from uuid import uuid4
+
+from security.merchant_auth import hash_password, normalize_email
+
+
+# =============================================================================
+# 🔐 OPTIONAL RUNTIME MERCHANT BOOTSTRAP
+# =============================================================================
+#
+# Runtime-only provisioning for the deployment environment.
+#
+# Required Render environment variables, when provisioning is desired:
+#   FADL_PAY_BOOTSTRAP_MERCHANT_NAME
+#   FADL_PAY_BOOTSTRAP_MERCHANT_EMAIL
+#   FADL_PAY_BOOTSTRAP_MERCHANT_PASSWORD
+#
+# The plaintext password is read ONLY from the environment, hashed with
+# Argon2, and never written into source files.
+#
+# Existing ACTIVE merchants with passwords are never overwritten.
+# =============================================================================
+
+def bootstrap_environment_merchant(connection):
+    name = (
+        os.getenv("FADL_PAY_BOOTSTRAP_MERCHANT_NAME", "")
+        or ""
+    ).strip()
+
+    email_raw = (
+        os.getenv("FADL_PAY_BOOTSTRAP_MERCHANT_EMAIL", "")
+        or ""
+    ).strip()
+
+    password = (
+        os.getenv("FADL_PAY_BOOTSTRAP_MERCHANT_PASSWORD", "")
+        or ""
+    )
+
+    # No bootstrap configuration -> no action.
+    if not name and not email_raw and not password:
+        return {
+            "status": "skipped",
+        }
+
+    # Partial configuration -> fail safely.
+    if not name or not email_raw or not password:
+        raise ValueError(
+            "Incomplete FADL PAY merchant bootstrap configuration"
+        )
+
+    normalized_email = normalize_email(email_raw)
+
+    if len(password) < 8:
+        raise ValueError(
+            "Bootstrap merchant password must contain at least 8 characters"
+        )
+
+    existing = connection.execute(
+        """
+        SELECT
+            merchant_reference,
+            status,
+            password_hash
+        FROM merchants
+        WHERE lower(email) = ?
+        LIMIT 1
+        """,
+        (normalized_email,),
+    ).fetchone()
+
+    # ---------------------------------------------------------------------------------
+    # Existing merchant
+    # ---------------------------------------------------------------------------------
+
+    if existing is not None:
+
+        merchant_reference = existing["merchant_reference"]
+        status = existing["status"]
+        password_hash = existing["password_hash"]
+
+        # Never overwrite an active merchant password.
+        if status == "active" and password_hash:
+            return {
+                "status": "exists_active",
+                "merchant_reference": merchant_reference,
+            }
+
+        # Complete only an eligible pending merchant.
+        if (
+            status == "pending"
+            and (
+                password_hash is None
+                or not str(password_hash).strip()
+            )
+        ):
+            new_hash = hash_password(password)
+
+            updated = connection.execute(
+                """
+                UPDATE merchants
+                SET
+                    password_hash = ?,
+                    status = 'active'
+                WHERE merchant_reference = ?
+                  AND status = 'pending'
+                  AND (
+                      password_hash IS NULL
+                      OR trim(password_hash) = ''
+                  )
+                """,
+                (
+                    new_hash,
+                    merchant_reference,
+                ),
+            )
+
+            if updated.rowcount != 1:
+                raise RuntimeError(
+                    "Merchant bootstrap activation update failed"
+                )
+
+            return {
+                "status": "activated_existing",
+                "merchant_reference": merchant_reference,
+            }
+
+        raise RuntimeError(
+            "Bootstrap merchant exists but is not eligible for automatic setup"
+        )
+
+    # ---------------------------------------------------------------------------------
+    # New merchant
+    # ---------------------------------------------------------------------------------
+
+    merchant_reference = "MER-" + uuid4().hex.upper()
+    password_hash = hash_password(password)
+    now = datetime.now(timezone.utc).isoformat()
+
+    connection.execute(
+        """
+        INSERT INTO merchants (
+            merchant_reference,
+            name,
+            email,
+            password_hash,
+            status,
+            created_at
+        )
+        VALUES (?, ?, ?, ?, 'active', ?)
+        """,
+        (
+            merchant_reference,
+            name,
+            normalized_email,
+            password_hash,
+            now,
+        ),
+    )
+
+    return {
+        "status": "created_active",
+        "merchant_reference": merchant_reference,
+    }
+
 
 
 SEED_FILE = Path(__file__).resolve().parent / "reference_data.json"
@@ -173,10 +338,13 @@ def seed_reference_data(connection):
             ),
         )
 
+    bootstrap_result = bootstrap_environment_merchant(connection)
+
     return {
         "countries": len(data["countries"]),
         "currencies": len(data["currencies"]),
         "merchants": len(data["merchants"]),
         "merchant_countries": len(data["merchant_countries"]),
         "supported_currencies": len(data["supported_currencies"]),
+        "merchant_bootstrap": bootstrap_result["status"],
     }

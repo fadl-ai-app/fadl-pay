@@ -117,6 +117,16 @@ def merchant_dashboard_auth_dependency(
         return None
 
 
+
+# =====================================================================
+# MERCHANT DASHBOARD CANONICAL REDIRECT
+# /merchant/dashboard -> /merchant/dashboard/
+# =====================================================================
+
+@app.get("/merchant/dashboard", include_in_schema=False)
+async def merchant_dashboard_redirect():
+    return RedirectResponse(url="/merchant/dashboard/")
+
 merchant_dashboard_demo = create_dashboard()
 
 gr.mount_gradio_app(
@@ -147,58 +157,6 @@ gr.mount_gradio_app(
 )
 
 # ============================================================
-
-# =============================================================================
-# ⚠️ TEMPORARY PREVIEW SESSION — REMOVE BEFORE ANY REAL DEPLOYMENT
-# =============================================================================
-
-_PREVIEW_SESSION_SECRET = 'HStpkLD0iPbRwbavru4YSiuQhktEsg3SCmOwVbC6f0E'
-_PREVIEW_SESSION_USED = False
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 # Redirect /admin → /admin/
