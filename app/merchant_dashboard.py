@@ -573,141 +573,119 @@ def create_dashboard():
     # Gradio UI
     # ----------------------------------------------------------------------------------------------------------
 
-    with gr.Blocks(
-        title="FADL PAY — لوحة تحكم التاجر"
-    ) as demo:
+
+    portal_html = '<style>\n\n* {\n    box-sizing: border-box;\n}\n\nbody {\n    margin: 0;\n    min-height: 100vh;\n\n    font-family:\n        "Segoe UI",\n        Tahoma,\n        Arial,\n        sans-serif;\n\n    color: #173d30;\n\n    background:\n        radial-gradient(\n            circle at 50% 0%,\n            rgba(212,175,55,.13),\n            transparent 34%\n        ),\n        linear-gradient(\n            180deg,\n            #f7faf8,\n            #edf4f0\n        );\n}\n\n.container {\n    width: min(1100px, 94%);\n    margin: 0 auto;\n    padding: 32px 0 42px;\n}\n\n.header {\n    background:\n        linear-gradient(\n            145deg,\n            #0b5d42,\n            #073b2a\n        );\n\n    color: white;\n\n    border-radius: 26px;\n\n    padding: 30px;\n\n    box-shadow:\n        0 18px 45px rgba(7,59,42,.15);\n\n    margin-bottom: 22px;\n}\n\n.header-top {\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n\n    gap: 20px;\n}\n\n.brand {\n    display: flex;\n    align-items: center;\n    gap: 14px;\n}\n\n.logo {\n    width: 58px;\n    height: 58px;\n\n    display: flex;\n    align-items: center;\n    justify-content: center;\n\n    border-radius: 17px;\n\n    font-size: 28px;\n\n    background:\n        rgba(255,255,255,.10);\n\n    border:\n        1px solid rgba(212,175,55,.42);\n}\n\n.brand-title {\n    font-size: 24px;\n    font-weight: 800;\n}\n\n.brand-subtitle {\n    margin-top: 4px;\n    font-size: 12px;\n    opacity: .72;\n}\n\n.account {\n    text-align: left;\n    font-size: 11px;\n    opacity: .75;\n}\n\n.welcome {\n    margin-top: 24px;\n}\n\n.welcome h1 {\n    margin: 0;\n    font-size: 27px;\n}\n\n.welcome p {\n    margin: 8px 0 0;\n    font-size: 13px;\n    opacity: .75;\n}\n\n.grid {\n    display: grid;\n\n    grid-template-columns:\n        repeat(2, minmax(0, 1fr));\n\n    gap: 17px;\n}\n\n.card {\n    background: white;\n\n    border:\n        1px solid rgba(7,59,42,.09);\n\n    border-radius: 21px;\n\n    padding: 23px;\n\n    box-shadow:\n        0 8px 28px rgba(7,59,42,.07);\n\n    transition:\n        transform .16s ease,\n        box-shadow .16s ease;\n}\n\n.card:hover {\n    transform: translateY(-2px);\n\n    box-shadow:\n        0 13px 35px rgba(7,59,42,.11);\n}\n\n.card-head {\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n\n    gap: 14px;\n\n    margin-bottom: 15px;\n}\n\n.card-title-wrap {\n    display: flex;\n    align-items: center;\n    gap: 12px;\n}\n\n.icon {\n    width: 46px;\n    height: 46px;\n\n    display: flex;\n    align-items: center;\n    justify-content: center;\n\n    border-radius: 14px;\n\n    background:\n        #edf6f1;\n\n    font-size: 23px;\n}\n\n.card-title {\n    font-size: 17px;\n    font-weight: 800;\n}\n\n.status {\n    padding: 5px 9px;\n\n    border-radius: 999px;\n\n    font-size: 9px;\n    font-weight: 700;\n\n    background: #edf6f1;\n    color: #17663f;\n}\n\n.card-description {\n    margin-bottom: 17px;\n\n    font-size: 11px;\n    line-height: 1.8;\n\n    color: #72847d;\n}\n\n.fields {\n    display: grid;\n    grid-template-columns:\n        repeat(2, minmax(0, 1fr));\n\n    gap: 9px;\n}\n\n.field {\n    min-height: 49px;\n\n    padding: 10px 12px;\n\n    border-radius: 12px;\n\n    background: #f8faf9;\n\n    border:\n        1px solid #e8eeeb;\n}\n\n.field-label {\n    font-size: 9px;\n    color: #8a9a93;\n\n    margin-bottom: 4px;\n}\n\n.field-value {\n    font-size: 11px;\n    font-weight: 700;\n\n    color: #254f40;\n}\n\n.card-button {\n    width: 100%;\n\n    height: 43px;\n\n    margin-top: 15px;\n\n    border: 0;\n    border-radius: 12px;\n\n    background:\n        #e9f4ef;\n\n    color: #0b6042;\n\n    font-size: 11px;\n    font-weight: 800;\n\n    cursor: pointer;\n}\n\n.card-button:hover {\n    background: #dceee6;\n}\n\n.full {\n    grid-column: 1 / -1;\n}\n\n.footer {\n    text-align: center;\n\n    margin-top: 22px;\n\n    font-size: 9px;\n\n    color: #87968f;\n}\n\n@media (max-width: 760px) {\n\n    .grid {\n        grid-template-columns: 1fr;\n    }\n\n    .full {\n        grid-column: auto;\n    }\n\n    .header-top {\n        flex-direction: column;\n        align-items: flex-start;\n    }\n\n    .account {\n        text-align: right;\n    }\n\n    .fields {\n        grid-template-columns: 1fr;\n    }\n\n}\n\n</style>\n<style>\na[role="button"] {\n    cursor: pointer;\n    text-decoration: none !important;\n}\nbutton[disabled][aria-disabled="true"] {\n    opacity: .62 !important;\n    cursor: not-allowed !important;\n}\n#api_credentials, #authentication_info, #webhook_info {\n    scroll-margin-top: 28px;\n}\n</style>\n<div id="fadl_approved_merchant_portal">\n\n<div class="container">\n\n    <header class="header">\n\n        <div class="header-top">\n\n            <div class="brand">\n\n                <div class="logo">\n                    💳\n                </div>\n\n                <div>\n                    <div class="brand-title">\n                        FADL PAY\n                    </div>\n\n                    <div class="brand-subtitle">\n                        لوحة التاجر\n                    </div>\n                </div>\n\n            </div>\n\n            <div class="account">\n                الحساب: Merchant\n            </div>\n\n        </div>\n\n        <div class="welcome">\n            <h1>\n                مرحباً بك في لوحة التحكم\n            </h1>\n\n            <p>\n                جميع أدوات حسابك وخدمات FADL PAY في مكان واحد.\n            </p>\n        </div>\n\n    </header>\n\n\n    <main class="grid">\n\n\n        <!-- PAYMENT UI -->\n\n        <section class="card">\n\n            <div class="card-head">\n\n                <div class="card-title-wrap">\n\n                    <div class="icon">\n                        💳\n                    </div>\n\n                    <div class="card-title">\n                        واجهة الدفع\n                    </div>\n\n                </div>\n\n                <div class="status">\n                    نشطة\n                </div>\n\n            </div>\n\n            <div class="card-description">\n                إدارة إعدادات واجهة الدفع والخدمات المتاحة للعملاء.\n            </div>\n\n            <div class="fields">\n\n                <div class="field">\n                    <div class="field-label">\n                        الدول\n                    </div>\n                    <div class="field-value">\n                        243 دولة\n                    </div>\n                </div>\n\n                <div class="field">\n                    <div class="field-label">\n                        العملات\n                    </div>\n                    <div class="field-value">\n                        20 عملة\n                    </div>\n                </div>\n\n            </div>\n\n            <a class="card-button" href="/pay" role="button">\n                فتح واجهة الدفع\n            </a>\n\n        </section>\n\n\n        <!-- FINANCIAL ADMIN -->\n\n        <section class="card">\n\n            <div class="card-head">\n\n                <div class="card-title-wrap">\n\n                    <div class="icon">\n                        💰\n                    </div>\n\n                    <div class="card-title">\n                        الإدارة المالية\n                    </div>\n\n                </div>\n\n                <div class="status">\n                    محمية\n                </div>\n\n            </div>\n\n            <div class="card-description">\n                متابعة المعاملات والأرصدة والتقارير المالية حسب الصلاحية.\n            </div>\n\n            <div class="fields">\n\n                <div class="field">\n                    <div class="field-label">\n                        المعاملات\n                    </div>\n                    <div class="field-value">\n                        عرض ومتابعة\n                    </div>\n                </div>\n\n                <div class="field">\n                    <div class="field-label">\n                        التقارير\n                    </div>\n                    <div class="field-value">\n                        متاحة حسب الصلاحية\n                    </div>\n                </div>\n\n            </div>\n\n            <button class="card-button" type="button" disabled aria-disabled="true" title="تتطلب صلاحية Admin مستقلة">\n                فتح الإدارة المالية\n            </button>\n\n        </section>\n\n\n        <!-- KEYS -->\n\n        <section class="card">\n\n            <div class="card-head">\n\n                <div class="card-title-wrap">\n\n                    <div class="icon">\n                        🔑\n                    </div>\n\n                    <div class="card-title">\n                        المفاتيح والرموز\n                    </div>\n\n                </div>\n\n                <div class="status">\n                    محمية\n                </div>\n\n            </div>\n\n            <div class="card-description">\n                إدارة مفاتيح API والرموز وبيانات الوصول بدون عرض الأسرار مباشرة.\n            </div>\n\n            <div class="fields">\n\n                <div class="field">\n                    <div class="field-label">\n                        API Keys\n                    </div>\n                    <div class="field-value">\n                        إدارة المفاتيح\n                    </div>\n                </div>\n\n                <div class="field">\n                    <div class="field-label">\n                        Tokens\n                    </div>\n                    <div class="field-value">\n                        إدارة الرموز\n                    </div>\n                </div>\n\n            </div>\n\n            <a class="card-button" href="#api_credentials" role="button">\n                فتح المفاتيح والرموز\n            </a>\n\n        </section>\n\n\n        <!-- AUTH -->\n\n        <section class="card">\n\n            <div class="card-head">\n\n                <div class="card-title-wrap">\n\n                    <div class="icon">\n                        🔐\n                    </div>\n\n                    <div class="card-title">\n                        المصادقة والصلاحيات\n                    </div>\n\n                </div>\n\n                <div class="status">\n                    محمية\n                </div>\n\n            </div>\n\n            <div class="card-description">\n                إعدادات المصادقة والتحكم في الوصول حسب صلاحية المستخدم.\n            </div>\n\n            <div class="fields">\n\n                <div class="field">\n                    <div class="field-label">\n                        Authentication\n                    </div>\n                    <div class="field-value">\n                        مفعّلة\n                    </div>\n                </div>\n\n                <div class="field">\n                    <div class="field-label">\n                        Permissions\n                    </div>\n                    <div class="field-value">\n                        Role-Based\n                    </div>\n                </div>\n\n            </div>\n\n            <a class="card-button" href="#authentication_info" role="button">\n                إدارة المصادقة\n            </a>\n\n        </section>\n\n\n        <!-- WEBHOOK -->\n\n        <section class="card full">\n\n            <div class="card-head">\n\n                <div class="card-title-wrap">\n\n                    <div class="icon">\n                        🔔\n                    </div>\n\n                    <div class="card-title">\n                        Webhook\n                    </div>\n\n                </div>\n\n                <div class="status">\n                    جاهز للإعداد\n                </div>\n\n            </div>\n\n            <div class="card-description">\n                إدارة Endpoint والأحداث وبيانات التحقق ومتابعة عمليات التسليم.\n            </div>\n\n            <div class="fields">\n\n                <div class="field">\n                    <div class="field-label">\n                        Endpoint\n                    </div>\n                    <div class="field-value">\n                        محفوظ بشكل آمن\n                    </div>\n                </div>\n\n                <div class="field">\n                    <div class="field-label">\n                        Events\n                    </div>\n                    <div class="field-value">\n                        معاملات الدفع\n                    </div>\n                </div>\n\n                <div class="field">\n                    <div class="field-label">\n                        Secret\n                    </div>\n                    <div class="field-value">\n                        غير معروض\n                    </div>\n                </div>\n\n                <div class="field">\n                    <div class="field-label">\n                        Delivery\n                    </div>\n                    <div class="field-value">\n                        متابعة الحالة\n                    </div>\n                </div>\n\n            </div>\n\n            <a class="card-button" href="#webhook_info" role="button">\n                إدارة Webhook\n            </a>\n\n        </section>\n\n\n    </main>\n\n\n    <div class="footer">\n        FADL PAY · Merchant Sandbox\n    </div>\n\n</div>\n\n</div>'
+
+
+    with gr.Blocks(title="FADL PAY — لوحة التاجر") as demo:
+
+        # Approved complete design, embedded into the real dashboard.
+        gr.HTML(portal_html)
 
         gr.HTML(
             """
-            <style>
-            :root {
-                --fadl-green-soft: #eef7f1;
-                --fadl-green-pale: #f6fbf7;
-                --fadl-green-border: #cfe5d6;
-                --fadl-green-text: #24543a;
-                --fadl-green-accent: #4f8a68;
-            }
-
-            body {
-                direction: rtl;
-            }
-
-            .fadl-dashboard {
-                background: var(--fadl-green-pale);
-                border: 1px solid var(--fadl-green-border);
-                border-radius: 22px;
-                padding: 24px;
-            }
-
-            .fadl-dashboard h1,
-            .fadl-dashboard h2,
-            .fadl-dashboard h3 {
-                color: var(--fadl-green-text);
-            }
-
-            .fadl-dashboard .gr-markdown {
-                background: transparent;
-            }
-
-            .fadl-dashboard-card {
-                background: var(--fadl-green-soft);
-                border: 1px solid var(--fadl-green-border);
-                border-radius: 16px;
-                padding: 16px;
-            }
-            </style>
+            <section id="merchant_account_data" dir="rtl"
+                     style="padding:20px 4px 8px">
+              <h2>👤 بيانات حساب التاجر</h2>
+              <p style="font-size:16px;line-height:1.8">
+                هذه البيانات محمّلة من مصادر لوحة التاجر الحقيقية بعد
+                التحقق من جلسة الدخول.
+              </p>
+            </section>
             """
         )
 
-        with gr.Column(
-            elem_classes=["fadl-dashboard"]
-        ):
+        title_md = gr.Markdown(value="⏳ جاري تحميل بيانات التاجر...")
 
-            title_md = gr.Markdown(
-                "## 🔐 جاري تحميل لوحة التاجر..."
+        with gr.Row():
+            transactions_md = gr.Markdown(
+                value="### 💳 العمليات\n## —"
+            )
+            total_md = gr.Markdown(
+                value="### 💰 إجمالي القيمة\n## —"
+            )
+            collected_md = gr.Markdown(
+                value="### ✅ المحصل\n## —"
+            )
+            pending_md = gr.Markdown(
+                value="### ⏳ المعلّق\n## —"
             )
 
-            with gr.Row():
+        operational_md = gr.Markdown(
+            value="## 🔐 السجل التشغيلي\n\nجاري التحميل..."
+        )
 
-                transactions_md = gr.Markdown(
-                    "### 💳 العمليات\n## —"
-                )
+        status_title_md = gr.Markdown(
+            value="## 📈 توزيع العمليات حسب الحالة"
+        )
+        status_md = gr.Markdown(value="جاري التحميل...")
 
-                total_md = gr.Markdown(
-                    "### 💰 إجمالي القيمة\n## —"
-                )
+        currency_title_md = gr.Markdown(
+            value="## 💱 توزيع العملات"
+        )
+        currency_md = gr.Markdown(value="جاري التحميل...")
 
-                collected_md = gr.Markdown(
-                    "### ✅ المحصل\n## —"
-                )
+        payment_title_md = gr.Markdown(
+            value="## 💳 طرق الدفع"
+        )
+        payment_md = gr.Markdown(value="جاري التحميل...")
 
-                pending_md = gr.Markdown(
-                    "### ⏳ المعلّق\n## —"
-                )
+        recent_title_md = gr.Markdown(
+            value="## 🧾 آخر العمليات"
+        )
+        recent_md = gr.Markdown(value="جاري التحميل...")
 
-            operational_md = gr.Markdown(
-                "## 🔐 السجل التشغيلي\n\nجاري التحميل..."
-            )
-
-            status_title_md = gr.Markdown(
-                "## 📈 توزيع العمليات حسب الحالة"
-            )
-
-            status_md = gr.Markdown(
-                "جاري التحميل..."
-            )
-
-            currency_title_md = gr.Markdown(
-                "## 💱 توزيع العملات"
-            )
-
-            currency_md = gr.Markdown(
-                "جاري التحميل..."
-            )
-
-            payment_title_md = gr.Markdown(
-                "## 💳 طرق الدفع"
-            )
-
-            payment_md = gr.Markdown(
-                "جاري التحميل..."
-            )
-
-            recent_title_md = gr.Markdown(
-                "## 🧾 آخر العمليات"
-            )
-
-            recent_md = gr.Markdown(
-                "جاري التحميل..."
-            )
-
-        # V2.13-D API CREDENTIALS UI
-
-        gr.Markdown(
+        gr.HTML(
             """
-## 🔐 API Credentials
-
-إنشاء مفتاح API جديد للتاجر.
-
-> ⚠️ سيتم عرض المفتاح السري مرة واحدة فقط بعد الإنشاء.
-> لا يتم تخزينه في المتصفح بواسطة لوحة التحكم.
+            <section id="api_credentials" dir="rtl"
+                     style="padding:20px 4px 8px">
+              <h2>🔑 إدارة API Credentials</h2>
+              <p style="font-size:16px;line-height:1.8">
+                إنشاء مفتاح مرتبط بجلسة التاجر الحالية.
+                المفتاح السري يظهر مرة واحدة فقط؛ احفظيه في مكان آمن.
+              </p>
+            </section>
             """
         )
 
         create_api_key_btn = gr.Button(
-            "🔑 إنشاء API Credential جديد",
+            "🔑 إنشاء API Credential",
             variant="primary",
         )
 
-        api_key_status_md = gr.Markdown(
-            "لم يتم إنشاء Credential جديد."
-        )
+        api_key_status_md = gr.Markdown(value="")
 
         api_key_once = gr.Textbox(
-            label="🔐 المفتاح السري — يظهر مرة واحدة",
+            label="المفتاح السري — يظهر مرة واحدة فقط",
             value="",
+            type="text",
             interactive=False,
-            type="password",
+        )
+
+        gr.HTML(
+            """
+            <section id="authentication_info" dir="rtl"
+                     style="padding:20px 4px 8px">
+              <h2>🔐 المصادقة والصلاحيات</h2>
+              <p style="font-size:16px;line-height:1.8">
+                لوحة التاجر محمية بجلسة Merchant Session.
+                لا يُسمح بفتحها دون جلسة صالحة.
+              </p>
+            </section>
+            """
+        )
+
+        gr.HTML(
+            """
+            <section id="webhook_info" dir="rtl"
+                     style="padding:20px 4px 8px">
+              <h2>🔔 Webhook</h2>
+              <p style="font-size:16px;line-height:1.8">
+                طبقة Webhook موجودة في الخلفية. لا تعرض هذه اللوحة
+                أزرار إدارة غير مرتبطة بواجهة فعلية.
+              </p>
+            </section>
+            """
         )
 
         create_api_key_btn.click(
@@ -739,7 +717,6 @@ def create_dashboard():
                 recent_md,
             ],
         )
-
     return demo
 
 

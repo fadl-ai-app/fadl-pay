@@ -159,6 +159,8 @@ def create_merchant_login_demo():
 
     with gr.Blocks(
         title="FADL PAY — دخول التاجر",
+        css=LOGIN_UI_CSS,
+        js=LOGIN_UI_JS,
     ) as demo:
 
         gr.HTML(
@@ -222,7 +224,96 @@ def create_merchant_login_demo():
                 fn=None,
                 inputs=[email, password],
                 outputs=[],
-                js="fadlMerchantLogin",
+                js=r"""
+                async (email, password) => {
+                    const statusEl = document.querySelector(
+                        "#fadl-login-status"
+                    );
+
+                    email = (email || "").trim();
+                    password = password || "";
+
+                    if (!email || !password) {
+                        if (statusEl) {
+                            statusEl.innerText =
+                                "يرجى إدخال البريد الإلكتروني وكلمة المرور.";
+                            statusEl.className =
+                                "fadl-login-error";
+                        }
+                        return [];
+                    }
+
+                    if (statusEl) {
+                        statusEl.innerText =
+                            "جاري تسجيل الدخول...";
+                        statusEl.className = "";
+                    }
+
+                    try {
+                        const response = await fetch(
+                            "/merchant/login",
+                            {
+                                method: "POST",
+                                credentials: "include",
+                                headers: {
+                                    "Content-Type":
+                                        "application/json"
+                                },
+                                body: JSON.stringify({
+                                    email: email,
+                                    password: password
+                                })
+                            }
+                        );
+
+                        let data = {};
+
+                        try {
+                            data = await response.json();
+                        } catch (_) {
+                            data = {};
+                        }
+
+                        if (!response.ok) {
+                            const detail =
+                                data.detail ||
+                                "تعذر تسجيل الدخول. تحقق من البيانات وحاول مرة أخرى.";
+
+                            if (statusEl) {
+                                statusEl.innerText = detail;
+                                statusEl.className =
+                                    "fadl-login-error";
+                            }
+
+                            return [];
+                        }
+
+                        if (statusEl) {
+                            statusEl.innerText =
+                                "تم تسجيل الدخول بنجاح.";
+                            statusEl.className =
+                                "fadl-login-success";
+                        }
+
+                        window.location.assign(
+                            "/merchant/dashboard/"
+                        );
+
+                        return [];
+
+                    } catch (error) {
+
+                        if (statusEl) {
+                            statusEl.innerText =
+                                "تعذر الاتصال بالخادم. حاول مرة أخرى.";
+                            statusEl.className =
+                                "fadl-login-error";
+                        }
+
+                        return [];
+                    }
+                }
+                """,
             )
 
     return demo

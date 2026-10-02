@@ -16,7 +16,7 @@ from backend.merchant_api_login import router as merchant_api_login_router
 from backend.merchant_auth_routes import router as merchant_auth_router
 from app.financial_admin_ui import financial_admin_demo
 from app.merchant_dashboard import create_dashboard
-from security.merchant_session import get_session_merchant
+from security.merchant_session import get_session_merchant, create_session
 from app.merchant_login import (
     demo as merchant_login_demo,
     LOGIN_UI_CSS,
@@ -106,7 +106,11 @@ def merchant_dashboard_auth_dependency(
         return None
 
     try:
-        get_session_merchant(session_token)
+        merchant_reference = get_session_merchant(session_token)
+
+        if not merchant_reference:
+            return None
+
         return session_token
 
     except PermissionError:
@@ -143,6 +147,60 @@ gr.mount_gradio_app(
 )
 
 # ============================================================
+
+# =============================================================================
+# ⚠️ TEMPORARY PREVIEW SESSION — REMOVE BEFORE ANY REAL DEPLOYMENT
+# =============================================================================
+
+_PREVIEW_SESSION_SECRET = 'HStpkLD0iPbRwbavru4YSiuQhktEsg3SCmOwVbC6f0E'
+_PREVIEW_SESSION_USED = False
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # Redirect /admin → /admin/
 @app.get("/admin", include_in_schema=False)
 async def admin_redirect():
@@ -188,13 +246,11 @@ async def fadl_pay_home():
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>FADL PAY</title>
 
     <style>
-
         * {
             box-sizing: border-box;
         }
@@ -212,7 +268,7 @@ async def fadl_pay_home():
             align-items: center;
             justify-content: center;
 
-            padding: 18px;
+            padding: 24px;
 
             font-family:
                 "Segoe UI",
@@ -220,18 +276,20 @@ async def fadl_pay_home():
                 Arial,
                 sans-serif;
 
-            color: #ffffff;
+            color: #163c2e;
 
             background:
                 radial-gradient(
                     circle at 50% 0%,
-                    rgba(212,175,55,.12),
-                    transparent 42%
+                    rgba(212,175,55,.14),
+                    transparent 38%
                 ),
-                #073b2a;
+                linear-gradient(
+                    180deg,
+                    #f9fbf8 0%,
+                    #eef5f1 100%
+                );
         }
-
-        /* زخرفة هندسية إسلامية خفيفة */
 
         body::before {
             content: "";
@@ -241,263 +299,377 @@ async def fadl_pay_home():
 
             pointer-events: none;
 
-            opacity: .045;
+            opacity: .035;
 
             background-image:
                 linear-gradient(
                     30deg,
-                    #d4af37 12%,
+                    #b38a24 12%,
                     transparent 12.5%,
                     transparent 87%,
-                    #d4af37 87.5%
+                    #b38a24 87.5%
                 ),
                 linear-gradient(
                     150deg,
-                    #d4af37 12%,
+                    #b38a24 12%,
                     transparent 12.5%,
                     transparent 87%,
-                    #d4af37 87.5%
+                    #b38a24 87.5%
                 );
 
             background-size: 52px 90px;
         }
 
-        .gateway {
+        .page {
             position: relative;
             z-index: 1;
 
-            width: min(650px, 100%);
+            width: min(470px, 100%);
+        }
 
-            padding: 27px 24px 21px;
+        .card {
+            overflow: hidden;
 
-            border-radius: 23px;
+            border-radius: 26px;
 
-            border: 1px solid
-                rgba(212,175,55,.38);
+            background: #ffffff;
+
+            border: 1px solid rgba(7,59,42,.10);
+
+            box-shadow:
+                0 25px 70px rgba(7,59,42,.12),
+                0 4px 16px rgba(0,0,0,.04);
+        }
+
+        .top {
+            padding: 30px 30px 24px;
+
+            text-align: center;
+
+            color: #ffffff;
 
             background:
                 linear-gradient(
                     145deg,
-                    rgba(15,82,58,.98),
-                    rgba(5,48,34,.98)
+                    #0b5a40,
+                    #073b2a
                 );
-
-            box-shadow:
-                0 22px 60px rgba(0,0,0,.28),
-                inset 0 1px 0
-                    rgba(255,255,255,.08);
         }
 
-        .brand {
-            text-align: center;
-            margin-bottom: 22px;
-        }
+        .logo {
+            width: 62px;
+            height: 62px;
 
-        .icon {
-            font-size: 28px;
-            margin-bottom: 3px;
-        }
-
-        .name {
-            font-size: 24px;
-            font-weight: 800;
-            letter-spacing: .4px;
-        }
-
-        .subtitle {
-            margin-top: 5px;
-            font-size: 12px;
-            opacity: .72;
-        }
-
-        .choices {
-            display: grid;
-
-            grid-template-columns:
-                repeat(2, minmax(0, 1fr));
-
-            gap: 13px;
-        }
-
-        .choice {
-            min-height: 108px;
+            margin: 0 auto 13px;
 
             display: flex;
-            flex-direction: column;
-
             align-items: center;
             justify-content: center;
 
-            text-decoration: none;
-            color: #ffffff;
+            border-radius: 18px;
 
-            border-radius: 17px;
+            font-size: 30px;
 
-            background:
-                rgba(255,255,255,.07);
+            background: rgba(255,255,255,.11);
 
-            border:
-                1px solid
-                rgba(255,255,255,.10);
+            border: 1px solid
+                rgba(212,175,55,.42);
+
+            box-shadow:
+                inset 0 1px 0 rgba(255,255,255,.10);
+        }
+
+        .name {
+            font-size: 27px;
+            font-weight: 800;
+            letter-spacing: .5px;
+        }
+
+        .welcome {
+            margin-top: 7px;
+
+            font-size: 15px;
+            font-weight: 500;
+
+            opacity: .92;
+        }
+
+        .hint {
+            margin-top: 7px;
+
+            font-size: 11px;
+
+            opacity: .66;
+        }
+
+        .form {
+            padding: 30px;
+        }
+
+        .field {
+            margin-bottom: 17px;
+        }
+
+        .label {
+            display: block;
+
+            margin-bottom: 8px;
+
+            font-size: 13px;
+            font-weight: 700;
+
+            color: #214d3d;
+        }
+
+        .input {
+            width: 100%;
+
+            height: 52px;
+
+            padding: 0 15px;
+
+            border-radius: 13px;
+
+            border: 1px solid #d7e3dd;
+
+            background: #fbfdfc;
+
+            color: #163c2e;
+
+            font-size: 14px;
+
+            outline: none;
 
             transition:
-                transform .18s ease,
-                background .18s ease,
-                border-color .18s ease;
+                border-color .18s ease,
+                box-shadow .18s ease,
+                background .18s ease;
         }
 
-        .choice:hover {
-            transform: translateY(-3px);
+        .input:focus {
+            background: #ffffff;
+
+            border-color: #0b6a49;
+
+            box-shadow:
+                0 0 0 4px rgba(11,106,73,.09);
+        }
+
+        .input::placeholder {
+            color: #97aaa2;
+        }
+
+        .submit {
+            width: 100%;
+
+            height: 53px;
+
+            margin-top: 4px;
+
+            border: 0;
+            border-radius: 14px;
 
             background:
-                rgba(255,255,255,.115);
+                linear-gradient(
+                    135deg,
+                    #0d704d,
+                    #084b36
+                );
 
-            border-color:
-                rgba(212,175,55,.65);
+            color: #ffffff;
+
+            font-size: 15px;
+            font-weight: 800;
+
+            cursor: pointer;
+
+            box-shadow:
+                0 10px 25px rgba(7,59,42,.16);
+
+            transition:
+                transform .16s ease,
+                box-shadow .16s ease;
         }
 
-        .choice-icon {
-            font-size: 29px;
-            margin-bottom: 8px;
+        .submit:hover {
+            transform: translateY(-1px);
+
+            box-shadow:
+                0 13px 30px rgba(7,59,42,.21);
         }
 
-        .choice-title {
-            font-size: 16px;
-            font-weight: 700;
+        .signup {
+            margin-top: 20px;
+
+            text-align: center;
+
+            font-size: 12px;
+
+            color: #71847c;
         }
 
-        .choice-hint {
-            margin-top: 4px;
+        .signup a {
+            color: #0b6042;
+
+            font-weight: 800;
+
+            text-decoration: none;
+        }
+
+        .signup a:hover {
+            text-decoration: underline;
+        }
+
+        .security {
+            margin-top: 20px;
+            padding-top: 18px;
+
+            border-top: 1px solid #edf1ef;
+
+            text-align: center;
 
             font-size: 10px;
 
-            opacity: .58;
+            color: #81918b;
         }
 
         .footer {
-            margin-top: 17px;
+            margin-top: 16px;
 
             text-align: center;
 
             font-size: 9px;
 
-            opacity: .38;
+            color: #8a9993;
         }
 
         @media (max-width: 560px) {
-
             body {
-                padding: 11px;
+                padding: 14px;
             }
 
-            .gateway {
-                padding: 22px 14px 18px;
-                border-radius: 20px;
+            .top {
+                padding:
+                    25px 20px 21px;
             }
 
-            .brand {
-                margin-bottom: 17px;
+            .form {
+                padding: 23px 20px 22px;
             }
 
             .name {
-                font-size: 21px;
+                font-size: 23px;
             }
 
-            .choices {
-                grid-template-columns: 1fr;
-                gap: 9px;
+            .welcome {
+                font-size: 14px;
             }
 
-            .choice {
-                min-height: 82px;
+            .input {
+                height: 50px;
             }
-
-            .choice-icon {
-                font-size: 25px;
-                margin-bottom: 5px;
-            }
-
         }
-
     </style>
 </head>
 
 <body>
 
-    <main class="gateway">
+    <main class="page">
 
-        <div class="brand">
+        <section class="card">
 
-            <div class="icon">💳</div>
+            <div class="top">
 
-            <div class="name">
-                FADL PAY
-            </div>
-
-            <div class="subtitle">
-                اختر الواجهة للدخول
-            </div>
-
-        </div>
-
-
-        <div class="choices">
-
-            <a
-                class="choice"
-                href="/pay"
-            >
-                <div class="choice-icon">
+                <div class="logo">
                     💳
                 </div>
 
-                <div class="choice-title">
-                    واجهة الدفع
+                <div class="name">
+                    FADL PAY
                 </div>
 
-                <div class="choice-hint">
-                    الدفع بسهولة وأمان
-                </div>
-            </a>
-
-
-            <a
-                class="choice"
-                href="/admin/"
-            >
-                <div class="choice-icon">
-                    💰
+                <div class="welcome">
+                    مرحباً بك
                 </div>
 
-                <div class="choice-title">
-                    الإدارة المالية
+                <div class="hint">
+                    ادخل إلى حسابك للوصول إلى صفحتك
                 </div>
 
-                <div class="choice-hint">
-                    إدارة ومتابعة المعاملات
+            </div>
+
+
+            <div class="form">
+
+                <div class="field">
+
+                    <label class="label" for="email">
+                        البريد الإلكتروني
+                    </label>
+
+                    <input
+                        id="email"
+                        class="input"
+                        type="email"
+                        autocomplete="email"
+                        placeholder="أدخل بريدك الإلكتروني"
+                    >
+
                 </div>
-            </a>
 
 
+                <div class="field">
 
-            <a
-                class="choice"
-                href="/merchant/"
-            >
-                <div class="choice-icon">
-                    🏪
+                    <label class="label" for="password">
+                        كلمة المرور
+                    </label>
+
+                    <input
+                        id="password"
+                        class="input"
+                        type="password"
+                        autocomplete="current-password"
+                        placeholder="أدخل كلمة المرور"
+                    >
+
                 </div>
 
-                <div class="choice-title">
-                    دخول التاجر
+
+                <button
+                    class="submit"
+                    type="button"
+                    id="enter-page"
+                >
+                    ادخل للصفحة
+                </button>
+
+                <div
+                    id="login-status"
+                    aria-live="polite"
+                    style="
+                        margin-top: 12px;
+                        min-height: 20px;
+                        text-align: center;
+                        font-size: 11px;
+                    "
+                ></div>
+
+
+                <div class="signup">
+                    ليس لديك حساب؟
+                    <a href="#" id="create-account">
+                        إنشاء حساب
+                    </a>
                 </div>
 
-                <div class="choice-hint">
-                    تسجيل الدخول وإدارة الحساب
-                </div>
-            </a>
 
-        </div>
+                <div class="security">
+                    🔐 دخول آمن · الوصول حسب الصلاحية
+                </div>
+
+            </div>
+
+        </section>
 
 
         <div class="footer">
@@ -506,7 +678,127 @@ async def fadl_pay_home():
 
     </main>
 
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const button = document.getElementById("enter-page");
+    const emailEl = document.getElementById("email");
+    const passwordEl = document.getElementById("password");
+    const statusEl = document.getElementById("login-status");
+
+    if (!button || !emailEl || !passwordEl) {
+        return;
+    }
+
+    async function loginFromHome() {
+
+        const email = emailEl.value.trim();
+        const password = passwordEl.value;
+
+        if (!email || !password) {
+            if (statusEl) {
+                statusEl.innerText =
+                    "يرجى إدخال البريد الإلكتروني وكلمة المرور.";
+                statusEl.style.color = "#a61b1b";
+            }
+            return;
+        }
+
+        button.disabled = true;
+        button.style.opacity = "0.75";
+        button.innerText = "جاري التحقق...";
+
+        if (statusEl) {
+            statusEl.innerText = "";
+        }
+
+        try {
+
+            const response = await fetch(
+                "/merchant/login",
+                {
+                    method: "POST",
+                    credentials: "include",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password
+                    })
+                }
+            );
+
+            let data = {};
+
+            try {
+                data = await response.json();
+            } catch (_) {
+                data = {};
+            }
+
+            if (!response.ok) {
+
+                const detail =
+                    typeof data.detail === "string"
+                        ? data.detail
+                        : "البريد الإلكتروني أو كلمة المرور غير صحيحة.";
+
+                if (statusEl) {
+                    statusEl.innerText = detail;
+                    statusEl.style.color = "#a61b1b";
+                }
+
+                button.disabled = false;
+                button.style.opacity = "1";
+                button.innerText = "ادخل للصفحة";
+
+                return;
+            }
+
+            if (statusEl) {
+                statusEl.innerText = "تم تسجيل الدخول بنجاح...";
+                statusEl.style.color = "#176b3a";
+            }
+
+            window.location.assign(
+                "/merchant/dashboard/"
+            );
+
+        } catch (error) {
+
+            if (statusEl) {
+                statusEl.innerText =
+                    "تعذر الاتصال بالخادم. حاول مرة أخرى.";
+                statusEl.style.color = "#a61b1b";
+            }
+
+            button.disabled = false;
+            button.style.opacity = "1";
+            button.innerText = "ادخل للصفحة";
+        }
+    }
+
+    button.addEventListener(
+        "click",
+        loginFromHome
+    );
+
+    passwordEl.addEventListener(
+        "keydown",
+        function (event) {
+            if (event.key === "Enter") {
+                loginFromHome();
+            }
+        }
+    );
+
+});
+</script>
+
+
 </body>
 
 </html>
 """
+
