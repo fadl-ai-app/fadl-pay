@@ -60,6 +60,40 @@ body {
     font-weight: 600;
     min-height: 24px;
 }
+
+/* =================================================================================
+   FADL PAY — LOGIN FIELD VISIBILITY
+   Keep entered text clearly visible before and after focus.
+   ================================================================================= */
+
+#fadl-merchant-email input,
+#fadl-merchant-email textarea,
+#fadl-merchant-password input,
+#fadl-merchant-password textarea {
+    color: #163c2e !important;
+    -webkit-text-fill-color: #163c2e !important;
+    background-color: #ffffff !important;
+    opacity: 1 !important;
+    caret-color: #0b6042 !important;
+}
+
+#fadl-merchant-email input::placeholder,
+#fadl-merchant-email textarea::placeholder,
+#fadl-merchant-password input::placeholder,
+#fadl-merchant-password textarea::placeholder {
+    color: #71847c !important;
+    -webkit-text-fill-color: #71847c !important;
+    opacity: 1 !important;
+}
+
+#fadl-merchant-email input:focus,
+#fadl-merchant-email textarea:focus,
+#fadl-merchant-password input:focus,
+#fadl-merchant-password textarea:focus {
+    color: #163c2e !important;
+    -webkit-text-fill-color: #163c2e !important;
+    background-color: #ffffff !important;
+}
 """
 
 
