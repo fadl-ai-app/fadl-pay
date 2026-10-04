@@ -8,6 +8,7 @@ The raw API key is never stored in the merchant session.
 """
 
 from security.api_keys import verify_api_key
+from database.database import get_connection
 from security.merchant_session import create_session
 
 
@@ -30,4 +31,23 @@ def create_session_from_api_key(api_key):
     if merchant_reference is None:
         raise PermissionError("Invalid API key")
 
-    return create_session(merchant_reference)
+    connection = get_connection()
+    try:
+        row = connection.execute(
+            "SELECT role FROM merchants "
+            "WHERE merchant_reference = ? LIMIT 1",
+            (merchant_reference,),
+        ).fetchone()
+
+        role = (
+            row["role"]
+            if row and row["role"]
+            else "owner"
+        )
+    finally:
+        connection.close()
+
+    return create_session(
+        merchant_reference,
+        role,
+    )

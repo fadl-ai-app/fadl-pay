@@ -11,6 +11,7 @@ SESSION_TTL_SECONDS = 8 * 60 * 60
 class MerchantSession:
     session_token: str
     merchant_reference: str
+    role: str
     csrf_token: str
     created_at: datetime
     expires_at: datetime
@@ -32,7 +33,7 @@ def _cleanup_expired_sessions():
         _sessions.pop(token, None)
 
 
-def create_session(merchant_reference):
+def create_session(merchant_reference, role="owner"):
     if not merchant_reference:
         raise ValueError("merchant_reference is required")
 
@@ -49,6 +50,7 @@ def create_session(merchant_reference):
     session = MerchantSession(
         session_token=session_token,
         merchant_reference=merchant_reference,
+        role=role or "owner",
         csrf_token=csrf_token,
         created_at=now,
         expires_at=expires_at,
@@ -78,6 +80,15 @@ def get_session_merchant(session_token):
         return None
 
     return session.merchant_reference
+
+
+def get_session_role(session_token):
+    session = get_session(session_token)
+
+    if session is None:
+        return None
+
+    return session.role
 
 
 def get_csrf_token(session_token):

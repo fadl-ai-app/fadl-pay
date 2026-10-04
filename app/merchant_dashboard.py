@@ -3,7 +3,11 @@ import gradio as gr
 from security.api_keys import create_api_key
 
 import database.database as db_module
-from security.merchant_session import get_session_merchant
+from security.merchant_session import (
+    get_session_merchant,
+    get_session_role,
+)
+from security.merchant_rbac import require_permission
 
 
 def dashboard_data(merchant_reference):
@@ -216,6 +220,9 @@ def dashboard_data(merchant_reference):
         }
     
 def dashboard_data_from_session(session_token):
+    role = get_session_role(session_token)
+    require_permission(role, "merchant.read")
+
     """
     Resolve merchant identity exclusively from the
     server-side authenticated session.
@@ -511,37 +518,39 @@ def create_dashboard():
     # ------------------------------------------------------------------------------------------------------
 
     def create_dashboard_api_key(request: gr.Request):
-
         session_token = getattr(
             request,
-            "username",
+                "username",
             None,
         )
 
         if not session_token:
             return (
-                "❌ Authentication required.",
-                "",
+                    "❌ Authentication required.",
+                    "",
             )
 
-        merchant = get_session_merchant(
+        merchant_reference = get_session_merchant(
             session_token
-        )
-
-        if not merchant:
-            return (
-                "❌ Merchant session is invalid or expired.",
-                "",
-            )
-
-        merchant_reference = merchant.get(
-            "merchant_reference"
         )
 
         if not merchant_reference:
             return (
-                "❌ Merchant reference is unavailable.",
-                "",
+                    "❌ Merchant session is invalid or expired.",
+                    "",
+            )
+
+        role = get_session_role(session_token)
+
+        try:
+            require_permission(
+                role,
+                    "api_credentials.manage",
+            )
+        except PermissionError:
+            return (
+                    "❌ ليس لديك صلاحية لإدارة مفاتيح API.",
+                    "",
             )
 
         try:
@@ -554,11 +563,11 @@ def create_dashboard():
 
             return (
                 f"❌ API key creation failed: {exc}",
-                "",
+                    "",
             )
 
         return (
-            """
+                """
 ## ✅ تم إنشاء API Credential
 
 **تنبيه أمني:** المفتاح السري يظهر هنا مرة واحدة فقط.
@@ -568,6 +577,7 @@ def create_dashboard():
 """,
             raw_api_key,
         )
+
 
     # ----------------------------------------------------------------------------------------------------------
     # Gradio UI

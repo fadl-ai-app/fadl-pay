@@ -11,6 +11,7 @@ from database.database import get_connection
 from security.merchant_auth import (
     normalize_email,
     verify_password,
+    hash_password,
     is_login_blocked,
     record_login_failure,
     clear_login_failures,
@@ -43,6 +44,22 @@ class MerchantLogoutRequest(BaseModel):
     csrf_token: str = Field(min_length=1, max_length=512)
 
 
+class MerchantChangePasswordRequest(BaseModel):
+    current_password: str = Field(
+        min_length=1,
+        max_length=256,
+    )
+    new_password: str = Field(
+        min_length=8,
+        max_length=256,
+    )
+    csrf_token: str = Field(
+        min_length=1,
+        max_length=512,
+    )
+
+
+
 def authenticate_merchant_for_login(
     email: str,
     password: str,
@@ -72,7 +89,8 @@ def authenticate_merchant_for_login(
                 name,
                 email,
                 status,
-                password_hash
+                password_hash,
+                role
             FROM merchants
             WHERE lower(email) = ?
             LIMIT 1
@@ -99,6 +117,7 @@ def authenticate_merchant_for_login(
             "name": row["name"],
             "email": row["email"],
             "status": row["status"],
+            "role": row["role"] or "owner",
         }
 
     finally:
@@ -145,7 +164,8 @@ async def merchant_login(
     clear_login_failures(email)
 
     session = create_session(
-        merchant["merchant_reference"]
+        merchant["merchant_reference"],
+        merchant.get("role", "owner"),
     )
 
     response = JSONResponse(
@@ -171,6 +191,139 @@ async def merchant_login(
         secure=True,
         samesite="lax",
         max_age=8 * 60 * 60,
+        path="/",
+    )
+
+    return response
+
+
+# -------------------------------------------------------------------------
+# Change merchant password
+# -------------------------------------------------------------------------
+
+@router.post("/password")
+async def merchant_change_password(
+    payload: MerchantChangePasswordRequest,
+    request: Request,
+):
+    token = request.cookies.get(
+        SESSION_COOKIE
+    )
+
+    session = get_session(token)
+
+    if session is None:
+        raise HTTPException(
+            status_code=401,
+            detail="Not authenticated",
+        )
+
+    if not verify_csrf(
+        token,
+        payload.csrf_token,
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="Invalid CSRF token",
+        )
+
+    if (
+        not isinstance(payload.current_password, str)
+        or not payload.current_password
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="Current password is required",
+        )
+
+    if (
+        not isinstance(payload.new_password, str)
+        or len(payload.new_password) < 8
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="New password must contain at least 8 characters",
+        )
+
+    if payload.current_password == payload.new_password:
+        raise HTTPException(
+            status_code=400,
+            detail="New password must be different from current password",
+        )
+
+    merchant_reference = session.merchant_reference
+
+    connection = get_connection()
+
+    try:
+        row = connection.execute(
+            """
+            SELECT password_hash
+            FROM merchants
+            WHERE merchant_reference = ?
+            LIMIT 1
+            """,
+            (merchant_reference,),
+        ).fetchone()
+
+        if row is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Merchant not found",
+            )
+
+        stored_hash = row["password_hash"]
+
+        if not stored_hash:
+            raise HTTPException(
+                status_code=400,
+                detail="Merchant password is not configured",
+            )
+
+        if not verify_password(
+            payload.current_password,
+            stored_hash,
+        ):
+            raise HTTPException(
+                status_code=401,
+                detail="Current password is incorrect",
+            )
+
+        new_hash = hash_password(
+            payload.new_password
+        )
+
+        connection.execute(
+            """
+            UPDATE merchants
+            SET password_hash = ?
+            WHERE merchant_reference = ?
+            """,
+            (
+                new_hash,
+                merchant_reference,
+            ),
+        )
+
+        connection.commit()
+
+    finally:
+        connection.close()
+
+    # Security: invalidate the session used for the password change.
+    revoke_session(token)
+
+    response = JSONResponse(
+        {
+            "success": True,
+            "authenticated": False,
+            "password_changed": True,
+            "reauthentication_required": True,
+        }
+    )
+
+    response.delete_cookie(
+        key=SESSION_COOKIE,
         path="/",
     )
 

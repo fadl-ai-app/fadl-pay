@@ -12,6 +12,40 @@ def get_connection():
     return connection
 
 
+
+
+def ensure_merchant_role_column(connection):
+    """
+    Backward-compatible migration for existing FADL PAY databases.
+
+    Existing merchants receive owner as their default role.
+    Empty/NULL role values are normalized to owner.
+    """
+    columns = {
+        row[1]
+        for row in connection.execute(
+            "PRAGMA table_info(merchants)"
+        ).fetchall()
+    }
+
+    if "role" not in columns:
+        connection.execute(
+            """
+            ALTER TABLE merchants
+            ADD COLUMN role TEXT NOT NULL DEFAULT 'owner'
+            """
+        )
+
+    connection.execute(
+        """
+        UPDATE merchants
+        SET role = 'owner'
+        WHERE role IS NULL
+           OR trim(role) = ''
+        """
+    )
+
+
 def initialize_database():
     connection = get_connection()
     cursor = connection.cursor()
@@ -24,9 +58,12 @@ def initialize_database():
             email TEXT NOT NULL,
         password_hash TEXT,
             status TEXT NOT NULL DEFAULT 'pending',
+
+            role TEXT NOT NULL DEFAULT 'owner',
             created_at TEXT NOT NULL
         )
     """)
+    ensure_merchant_role_column(connection)
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS customers (
