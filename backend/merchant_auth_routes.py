@@ -421,9 +421,9 @@ def revoke_api_key_by_id(credential_id, merchant_reference):
             detail="Invalid API Credential",
         )
 
-    from database.database import get_db_connection
+    from database.database import get_connection
 
-    connection = get_db_connection()
+    connection = get_connection()
 
     try:
         row = connection.execute(
@@ -548,9 +548,10 @@ async def merchant_api_credential_revoke(
     from security.merchant_session import (
         get_session_merchant,
         get_session_role,
+        verify_csrf,
     )
     from security.merchant_rbac import require_permission
-    from database.database import get_db_connection
+    from database.database import get_connection
 
     session_token = request.cookies.get("fadl_merchant_session")
 
@@ -584,7 +585,7 @@ async def merchant_api_credential_revoke(
             detail="API Credentials management permission required",
         )
 
-    connection = get_db_connection()
+    connection = get_connection()
 
     try:
         row = connection.execute(
