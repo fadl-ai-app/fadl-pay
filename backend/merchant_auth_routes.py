@@ -1,4 +1,5 @@
 from __future__ import annotations
+from security.api_keys import list_api_keys, revoke_api_key
 
 import sqlite3
 
@@ -404,3 +405,225 @@ async def merchant_logout(
     )
 
     return response
+
+
+# FADL_PAY_API_CREDENTIALS_REVOKE_BY_ID_V1
+def revoke_api_key_by_id(credential_id, merchant_reference):
+    """
+    Internal administrative revoke helper.
+
+    Ownership is enforced here as a second security boundary.
+    """
+
+    if not credential_id or not merchant_reference:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid API Credential",
+        )
+
+    from database.database import get_db_connection
+
+    connection = get_db_connection()
+
+    try:
+        row = connection.execute(
+            """
+            SELECT id, merchant_reference, status
+            FROM api_keys
+            WHERE id = ?
+            """,
+            (credential_id,),
+        ).fetchone()
+
+        if not row:
+            raise HTTPException(
+                status_code=404,
+                detail="API Credential not found",
+            )
+
+        if row["merchant_reference"] != merchant_reference:
+            raise HTTPException(
+                status_code=404,
+                detail="API Credential not found",
+            )
+
+        if row["status"] != "active":
+            raise HTTPException(
+                status_code=409,
+                detail="API Credential is already revoked",
+            )
+
+        connection.execute(
+            """
+            UPDATE api_keys
+            SET status = ?
+            WHERE id = ?
+              AND merchant_reference = ?
+            """,
+            (
+                "revoked",
+                credential_id,
+                merchant_reference,
+            ),
+        )
+
+        connection.commit()
+
+        return {
+            "credential_id": credential_id,
+            "merchant_reference": merchant_reference,
+            "status": "revoked",
+        }
+
+    finally:
+        connection.close()
+
+
+# FADL_PAY_API_CREDENTIALS_ROUTES_V1
+
+@router.get("/api-credentials")
+async def merchant_api_credentials_list(request: Request):
+    """
+    List API credentials for the currently authenticated merchant.
+
+    Permission:
+        api_credentials.read
+
+    Security:
+        merchant_reference comes from the authenticated session,
+        never from a client-supplied merchant_reference.
+    """
+
+    from security.merchant_session import (
+        get_session_merchant,
+        get_session_role,
+    )
+    from security.merchant_rbac import require_permission
+
+    session_token = request.cookies.get("fadl_merchant_session")
+
+    merchant_reference = get_session_merchant(session_token)
+
+    if not merchant_reference:
+        raise HTTPException(
+            status_code=401,
+            detail="Not authenticated",
+        )
+
+    role = get_session_role(session_token)
+
+    try:
+        require_permission(role, "api_credentials.read")
+    except Exception:
+        raise HTTPException(
+            status_code=403,
+            detail="API Credentials permission required",
+        )
+
+    credentials = list_api_keys(merchant_reference)
+
+    return {
+        "merchant_reference": merchant_reference,
+        "credentials": credentials,
+    }
+
+
+@router.post("/api-credentials/{credential_id}/revoke")
+async def merchant_api_credential_revoke(
+    credential_id: int,
+    request: Request,
+    csrf_token: str | None = None,
+):
+    """
+    Revoke an API credential belonging to the authenticated merchant.
+
+    Permission:
+        api_credentials.manage
+
+    Merchant isolation:
+        The credential is first resolved by its ID and ownership.
+        The client cannot supply another merchant_reference.
+    """
+
+    from security.merchant_session import (
+        get_session_merchant,
+        get_session_role,
+    )
+    from security.merchant_rbac import require_permission
+    from database.database import get_db_connection
+
+    session_token = request.cookies.get("fadl_merchant_session")
+
+    merchant_reference = get_session_merchant(session_token)
+
+    if not merchant_reference:
+        raise HTTPException(
+            status_code=401,
+            detail="Not authenticated",
+        )
+
+    if not csrf_token:
+        raise HTTPException(
+            status_code=403,
+            detail="CSRF token required",
+        )
+
+    if not verify_csrf(session_token, csrf_token):
+        raise HTTPException(
+            status_code=403,
+            detail="Invalid CSRF token",
+        )
+
+    role = get_session_role(session_token)
+
+    try:
+        require_permission(role, "api_credentials.manage")
+    except Exception:
+        raise HTTPException(
+            status_code=403,
+            detail="API Credentials management permission required",
+        )
+
+    connection = get_db_connection()
+
+    try:
+        row = connection.execute(
+            """
+            SELECT id, merchant_reference, status
+            FROM api_keys
+            WHERE id = ?
+            """,
+            (credential_id,),
+        ).fetchone()
+    finally:
+        connection.close()
+
+    if not row:
+        raise HTTPException(
+            status_code=404,
+            detail="API Credential not found",
+        )
+
+    if row["merchant_reference"] != merchant_reference:
+        raise HTTPException(
+            status_code=404,
+            detail="API Credential not found",
+        )
+
+    if row["status"] != "active":
+        raise HTTPException(
+            status_code=409,
+            detail="API Credential is already revoked",
+        )
+
+    # The existing revoke engine is responsible for the actual state change.
+    # We pass the authenticated merchant_reference explicitly.
+    #
+    # IMPORTANT:
+    # The API only accepts credential_id, never another merchant reference.
+    result = revoke_api_key_by_id(
+        credential_id,
+        merchant_reference,
+    )
+
+    return result

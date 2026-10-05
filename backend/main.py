@@ -129,6 +129,46 @@ async def merchant_dashboard_redirect():
 
 merchant_dashboard_demo = create_dashboard()
 
+
+# FADL_PAY_FINANCIAL_ADMIN_AUTH_V1
+def financial_admin_auth_dependency(
+    request: Request,
+    fadl_merchant_session: str | None = Cookie(default=None),
+):
+    """
+    Server-side protection boundary for Financial Admin.
+
+    A valid merchant session is required and the authenticated
+    merchant role must have financial_admin.read permission.
+
+    This dependency does NOT modify the database.
+    """
+
+    if not fadl_merchant_session:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    merchant_reference = get_session_merchant(fadl_merchant_session)
+
+    if not merchant_reference:
+        raise HTTPException(status_code=401, detail="Invalid or expired session")
+
+    # Resolve role from the existing session/RBAC layer.
+    from security.merchant_session import get_session_role
+    from security.merchant_rbac import require_permission
+
+    role = get_session_role(fadl_merchant_session)
+
+    try:
+        require_permission(role, "financial_admin.read")
+    except Exception:
+        raise HTTPException(status_code=403, detail="Financial Admin permission required")
+
+    request.state.merchant_reference = merchant_reference
+    request.state.merchant_role = role
+
+    return merchant_reference
+
+
 gr.mount_gradio_app(
     app,
     merchant_dashboard_demo,
@@ -175,6 +215,7 @@ gr.mount_gradio_app(
     app,
     financial_admin_demo,
     path="/admin",
+    auth_dependency=financial_admin_auth_dependency,
 )
 
 # ============================================================

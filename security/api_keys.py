@@ -195,3 +195,47 @@ def verify_api_key(api_key):
         return None
 
     return row["merchant_reference"]
+
+
+# FADL_PAY_API_CREDENTIALS_LIST_V1
+def list_api_keys(merchant_reference):
+    """
+    Return non-secret metadata for API credentials belonging ONLY
+    to the supplied merchant_reference.
+
+    The raw API key and key_hash are never returned.
+    """
+
+    if not merchant_reference:
+        return []
+
+    from database.database import get_db_connection
+
+    connection = get_db_connection()
+
+    try:
+        rows = connection.execute(
+            """
+            SELECT
+                id,
+                merchant_reference,
+                status,
+                created_at
+            FROM api_keys
+            WHERE merchant_reference = ?
+            ORDER BY id DESC
+            """,
+            (merchant_reference,),
+        ).fetchall()
+
+        return [
+            {
+                "id": row["id"],
+                "merchant_reference": row["merchant_reference"],
+                "status": row["status"],
+                "created_at": row["created_at"],
+            }
+            for row in rows
+        ]
+    finally:
+        connection.close()
