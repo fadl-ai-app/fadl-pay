@@ -19,6 +19,53 @@ def hash_api_key(api_key):
     ).hexdigest()
 
 
+def list_api_keys(merchant_reference):
+    """
+    Return non-secret API credential metadata for one merchant.
+
+    SECURITY:
+    - Never returns key_hash.
+    - Never returns raw API key.
+    - Merchant is isolated by merchant_reference.
+    """
+    connection = get_connection()
+    try:
+        cursor = connection.cursor()
+
+        cursor.execute(
+            """
+            SELECT id, merchant_reference, status, created_at
+            FROM api_credentials
+            WHERE merchant_reference = ?
+            ORDER BY id DESC
+            """,
+            (merchant_reference,),
+        )
+
+        rows = cursor.fetchall()
+
+        result = []
+        for row in rows:
+            if hasattr(row, "keys"):
+                result.append({
+                    "id": row["id"],
+                    "merchant_reference": row["merchant_reference"],
+                    "status": row["status"],
+                    "created_at": row["created_at"],
+                })
+            else:
+                result.append({
+                    "id": row[0],
+                    "merchant_reference": row[1],
+                    "status": row[2],
+                    "created_at": row[3],
+                })
+
+        return result
+    finally:
+        connection.close()
+
+
 def create_api_key(merchant_reference):
 
     connection = get_connection()

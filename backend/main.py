@@ -1,3 +1,4 @@
+from backend.merchant_webhook_routes import router as merchant_webhook_router
 from starlette.responses import RedirectResponse
 from integration_v2.router import router as integration_v2_router
 """
@@ -128,6 +129,8 @@ async def merchant_dashboard_redirect():
     return RedirectResponse(url="/merchant/dashboard/")
 
 merchant_dashboard_demo = create_dashboard()
+
+app.include_router(merchant_webhook_router)
 
 
 # FADL_PAY_FINANCIAL_ADMIN_AUTH_V1

@@ -518,39 +518,44 @@ def create_dashboard():
     # ------------------------------------------------------------------------------------------------------
 
     def create_dashboard_api_key(request: gr.Request):
+
         session_token = getattr(
             request,
-                "username",
+            "username",
             None,
         )
 
         if not session_token:
             return (
-                    "❌ Authentication required.",
-                    "",
+                "❌ Authentication required.",
+                "",
             )
 
-        merchant_reference = get_session_merchant(
+        merchant = get_session_merchant(
             session_token
+        )
+
+        if not merchant:
+            return (
+                "❌ Merchant session is invalid or expired.",
+                "",
+            )
+
+
+        try:
+            role = get_session_role(session_token)
+            require_permission(role, "api_credentials.manage")
+        except PermissionError:
+            return ("❌ ليس لديك صلاحية إدارة API Credentials.", "")
+
+        merchant_reference = merchant.get(
+            "merchant_reference"
         )
 
         if not merchant_reference:
             return (
-                    "❌ Merchant session is invalid or expired.",
-                    "",
-            )
-
-        role = get_session_role(session_token)
-
-        try:
-            require_permission(
-                role,
-                    "api_credentials.manage",
-            )
-        except PermissionError:
-            return (
-                    "❌ ليس لديك صلاحية لإدارة مفاتيح API.",
-                    "",
+                "❌ Merchant reference is unavailable.",
+                "",
             )
 
         try:
@@ -563,11 +568,11 @@ def create_dashboard():
 
             return (
                 f"❌ API key creation failed: {exc}",
-                    "",
+                "",
             )
 
         return (
-                """
+            """
 ## ✅ تم إنشاء API Credential
 
 **تنبيه أمني:** المفتاح السري يظهر هنا مرة واحدة فقط.
@@ -577,7 +582,6 @@ def create_dashboard():
 """,
             raw_api_key,
         )
-
 
     # ----------------------------------------------------------------------------------------------------------
     # Gradio UI
