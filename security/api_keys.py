@@ -19,51 +19,6 @@ def hash_api_key(api_key):
     ).hexdigest()
 
 
-def list_api_keys(merchant_reference):
-    """
-    Return non-secret API credential metadata for one merchant.
-
-    SECURITY:
-    - Never returns key_hash.
-    - Never returns raw API key.
-    - Merchant is isolated by merchant_reference.
-    """
-    connection = get_connection()
-    try:
-        cursor = connection.cursor()
-
-        cursor.execute(
-            """
-            SELECT id, merchant_reference, status, created_at
-            FROM api_credentials
-            WHERE merchant_reference = ?
-            ORDER BY id DESC
-            """,
-            (merchant_reference,),
-        )
-
-        rows = cursor.fetchall()
-
-        result = []
-        for row in rows:
-            if hasattr(row, "keys"):
-                result.append({
-                    "id": row["id"],
-                    "merchant_reference": row["merchant_reference"],
-                    "status": row["status"],
-                    "created_at": row["created_at"],
-                })
-            else:
-                result.append({
-                    "id": row[0],
-                    "merchant_reference": row[1],
-                    "status": row[2],
-                    "created_at": row[3],
-                })
-
-        return result
-    finally:
-        connection.close()
 
 
 def create_api_key(merchant_reference):
@@ -203,6 +158,64 @@ def revoke_api_key(
         "merchant_reference": merchant_reference,
         "status": "revoked",
     }
+
+
+
+def revoke_api_key_by_id(
+    api_key_id,
+    merchant_reference,
+):
+    """
+    Revoke one API key by ID, strictly scoped to its merchant.
+    """
+    if not merchant_reference:
+        raise ValueError("Merchant authorization required")
+
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT
+            id,
+            merchant_reference,
+            status
+        FROM api_keys
+        WHERE id = ?
+          AND merchant_reference = ?
+    """, (
+        api_key_id,
+        merchant_reference,
+    ))
+
+    row = cursor.fetchone()
+
+    if row is None:
+        connection.close()
+        return False
+
+    if row["status"] != "active":
+        connection.close()
+        return False
+
+    cursor.execute("""
+        UPDATE api_keys
+        SET status = 'revoked'
+        WHERE id = ?
+          AND merchant_reference = ?
+          AND status = 'active'
+    """, (
+        api_key_id,
+        merchant_reference,
+    ))
+
+    changed = cursor.rowcount == 1
+
+    if changed:
+        connection.commit()
+
+    connection.close()
+
+    return changed
 
 
 def verify_api_key(api_key):

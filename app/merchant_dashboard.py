@@ -1,6 +1,10 @@
 import sqlite3
 import gradio as gr
-from security.api_keys import create_api_key
+from security.api_keys import (
+    create_api_key,
+    list_api_keys,
+    revoke_api_key_by_id,
+)
 
 import database.database as db_module
 from security.merchant_session import (
@@ -398,6 +402,147 @@ def _build_recent_transactions_markdown(rows):
 
 
 
+
+def dashboard_api_keys(session_token):
+    role = get_session_role(session_token)
+    require_permission(
+        role,
+        "api_credentials.read",
+    )
+
+    merchant = get_session_merchant(session_token)
+
+    if not merchant:
+        return []
+
+    merchant_reference = merchant.get(
+        "merchant_reference"
+    )
+
+    return list_api_keys(
+        merchant_reference
+    )
+
+
+def dashboard_revoke_api_key(
+    session_token,
+    api_key_id,
+):
+    role = get_session_role(session_token)
+
+    require_permission(
+        role,
+        "api_credentials.manage",
+    )
+
+    merchant = get_session_merchant(session_token)
+
+    if not merchant:
+        return "❌ جلسة التاجر غير صالحة."
+
+    merchant_reference = merchant.get(
+        "merchant_reference"
+    )
+
+    try:
+        api_key_id = int(api_key_id)
+    except (TypeError, ValueError):
+        return "❌ رقم مفتاح API غير صالح."
+
+    changed = revoke_api_key_by_id(
+        api_key_id,
+        merchant_reference,
+    )
+
+    if changed:
+        return (
+            f"✅ تم إلغاء مفتاح API رقم {api_key_id}."
+        )
+
+    return (
+        "⚠️ المفتاح غير موجود أو غير نشط "
+        "أو غير تابع لهذا التاجر."
+    )
+
+
+def dashboard_webhook_deliveries(
+    session_token,
+):
+    role = get_session_role(session_token)
+
+    require_permission(
+        role,
+        "webhook.read",
+    )
+
+    merchant = get_session_merchant(
+        session_token
+    )
+
+    if not merchant:
+        return []
+
+    merchant_reference = merchant.get(
+        "merchant_reference"
+    )
+
+    return list_webhook_deliveries(
+        merchant_reference,
+        limit=50,
+    )
+
+
+def dashboard_retry_webhook(
+    session_token,
+    delivery_id,
+):
+    role = get_session_role(session_token)
+
+    require_permission(
+        role,
+        "webhook.manage",
+    )
+
+    merchant = get_session_merchant(
+        session_token
+    )
+
+    if not merchant:
+        return "❌ جلسة التاجر غير صالحة."
+
+    merchant_reference = merchant.get(
+        "merchant_reference"
+    )
+
+    try:
+        delivery_id = int(delivery_id)
+    except (TypeError, ValueError):
+        return "❌ رقم Delivery غير صالح."
+
+    result = retry_webhook_delivery(
+        delivery_id,
+        merchant_reference,
+    )
+
+    if result.get("success"):
+        return (
+            f"✅ تمت إعادة المحاولة — "
+            f"delivery={delivery_id}, "
+            f"status={result.get('status')}, "
+            f"attempts={result.get('attempts')}"
+        )
+
+    return (
+        "⚠️ لم تنجح إعادة المحاولة: "
+        + str(
+            result.get("reason")
+            or result.get("error")
+            or result.get("status")
+        )
+    )
+
+
+
 def create_dashboard():
 
     # ----------------------------------------------------------------------------------------------------------
@@ -711,7 +856,46 @@ def create_dashboard():
             ],
         )
 
-        demo.load(
+    
+    gr.Markdown("### 🔑 مفاتيح API")
+
+    api_keys_table = gr.JSON(
+        label="المفاتيح الحالية",
+        value=[],
+    )
+
+    api_key_revoke_id = gr.Number(
+        label="رقم مفتاح API المراد إلغاؤه",
+        precision=0,
+    )
+
+    api_key_revoke_btn = gr.Button(
+        "🚫 إلغاء مفتاح API",
+        variant="stop",
+    )
+
+    api_key_revoke_status = gr.Markdown()
+
+    gr.Markdown("### 🔔 Webhook Deliveries")
+
+    webhook_deliveries_table = gr.JSON(
+        label="سجل تسليم Webhook",
+        value=[],
+    )
+
+    webhook_delivery_retry_id = gr.Number(
+        label="رقم Delivery لإعادة المحاولة",
+        precision=0,
+    )
+
+    webhook_retry_btn = gr.Button(
+        "🔁 إعادة إرسال Webhook",
+    )
+
+    webhook_retry_status = gr.Markdown()
+
+
+    demo.load(
             fn=load_dashboard,
             inputs=None,
             outputs=[

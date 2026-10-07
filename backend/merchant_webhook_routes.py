@@ -13,7 +13,11 @@ from webhooks.endpoint_manager import (
     get_webhook_endpoint,
     update_webhook_endpoint_status,
 )
-from webhooks.dispatcher import get_merchant_webhook_endpoint
+from webhooks.dispatcher import (
+    get_merchant_webhook_endpoint,
+    list_webhook_deliveries,
+    retry_webhook_delivery,
+)
 
 
 router = APIRouter(
@@ -198,3 +202,57 @@ async def update_merchant_webhook_status(
         "endpoint_id": endpoint_id,
         "status": payload.status,
     }
+
+
+@router.get("/webhook/deliveries")
+async def get_merchant_webhook_deliveries(request: Request):
+    _, merchant = _authorized(request, "webhook.read")
+
+    merchant_reference = merchant.get("merchant_reference")
+
+    if not merchant_reference:
+        raise HTTPException(
+            status_code=400,
+            detail="Merchant reference is unavailable",
+        )
+
+    return {
+        "deliveries": list_webhook_deliveries(
+            merchant_reference,
+            limit=50,
+        ),
+    }
+
+
+@router.post("/webhook/deliveries/{delivery_id}/retry")
+async def retry_merchant_webhook_delivery(
+    delivery_id: int,
+    request: Request,
+):
+    _, merchant = _authorized(request, "webhook.manage")
+    verify_csrf(request)
+
+    merchant_reference = merchant.get("merchant_reference")
+
+    if not merchant_reference:
+        raise HTTPException(
+            status_code=400,
+            detail="Merchant reference is unavailable",
+        )
+
+    result = retry_webhook_delivery(
+        delivery_id,
+        merchant_reference,
+    )
+
+    if (
+        not result.get("success")
+        and result.get("reason") == "Webhook delivery not found"
+    ):
+        raise HTTPException(
+            status_code=404,
+            detail="Webhook delivery not found",
+        )
+
+    return result
+
