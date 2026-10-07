@@ -6,7 +6,7 @@ from security.merchant_session import (
     get_session_role,
     verify_csrf,
 )
-from security.rbac import require_permission
+from security.merchant_rbac import require_permission
 
 from webhooks.endpoint_manager import (
     create_webhook_endpoint,
