@@ -785,9 +785,6 @@ def submit_payment(
     # إنشاء المعاملة داخل Backend
     from backend.api import create_transaction
 
-    # merchant_reference داخلي — لا يظهر للمستخدم
-    import os
-
     # Merchant must come from the authenticated server-side session.
     # No hard-coded merchant reference is allowed for production payment creation.
     from security.merchant_session import get_session_merchant
@@ -805,12 +802,6 @@ def submit_payment(
 
     if not merchant_reference:
         return "❌ جلسة التاجر غير صالحة أو منتهية.".strip()
-
-    if not merchant_reference:
-        return (
-            "⚠️ إعداد التاجر غير مكتمل في بيئة التشغيل.\n\n"
-            "يرجى ضبط FADL_UI_MERCHANT_REFERENCE في Backend."
-        )
 
     try:
         transaction_reference = create_transaction(

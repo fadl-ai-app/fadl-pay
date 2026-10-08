@@ -1,7 +1,8 @@
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import HTMLResponse
-from fastapi import Request
+from fastapi import Request, HTTPException
 from payments.transaction_engine import create_transaction, get_transaction, update_transaction_status
+from security.merchant_session import get_session_merchant
 
 router = APIRouter()
 
@@ -267,7 +268,7 @@ async def create_customer_payment(request: Request):
     payment_method = data.get("payment_method")
 
     if country not in COUNTRY_CURRENCY:
-        from fastapi import HTTPException
+
         raise HTTPException(
             status_code=400,
             detail="الدولة غير مدعومة"
@@ -276,7 +277,7 @@ async def create_customer_payment(request: Request):
     expected_currency = COUNTRY_CURRENCY[country]
 
     if currency != expected_currency:
-        from fastapi import HTTPException
+
         raise HTTPException(
             status_code=400,
             detail="العملة لا تطابق الدولة"
@@ -285,14 +286,14 @@ async def create_customer_payment(request: Request):
     try:
         amount = int(amount)
     except (TypeError, ValueError):
-        from fastapi import HTTPException
+
         raise HTTPException(
             status_code=400,
             detail="المبلغ غير صحيح"
         )
 
     if amount <= 0:
-        from fastapi import HTTPException
+
         raise HTTPException(
             status_code=400,
             detail="المبلغ يجب أن يكون أكبر من صفر"
@@ -303,7 +304,7 @@ async def create_customer_payment(request: Request):
         "mobile_money",
         "card",
     }:
-        from fastapi import HTTPException
+
         raise HTTPException(
             status_code=400,
             detail="طريقة الدفع غير مدعومة"
@@ -313,10 +314,18 @@ async def create_customer_payment(request: Request):
     # Sandbox merchant
     # --------------------------------------------------------
 
-    MERCHANT_REFERENCE = "MER-007FFD589DE34A66A9ACB5063DD61F51"
+    # Merchant MUST come from the authenticated server-side session.
+    session_token = request.cookies.get("fadl_merchant_session")
+    merchant_reference = get_session_merchant(session_token)
+
+    if not merchant_reference:
+        raise HTTPException(
+            status_code=401,
+            detail="Not authenticated",
+        )
 
     transaction_reference = create_transaction(
-        merchant_reference=MERCHANT_REFERENCE,
+        merchant_reference=merchant_reference,
         amount=amount,
         currency=currency,
         customer_reference=customer_reference,
@@ -326,12 +335,12 @@ async def create_customer_payment(request: Request):
 
     transaction = get_transaction(
         transaction_reference,
-        merchant_reference=MERCHANT_REFERENCE,
+        merchant_reference=merchant_reference,
     )
 
     return {
         "success": True,
-        "environment": "sandbox",
+        "environment": "live",
         "transaction": transaction,
     }
 
@@ -601,7 +610,7 @@ button {
 </div>
 
 <div class="note">
-FADL PAY — Sandbox
+FADL PAY
 </div>
 
 </div>
@@ -660,7 +669,7 @@ async function startPayment() {
         return;
     }
 
-    showResult("⏳ جارٍ إنشاء عملية الدفع في Sandbox...", true);
+    showResult("⏳ جارٍ إنشاء عملية الدفع...", true);
 
     try {
 
@@ -706,7 +715,7 @@ async function startPayment() {
                 true
             );
 
-            showSandboxControls(transaction);
+    
 
         } else {
 
@@ -760,7 +769,7 @@ function showSandboxControls(transaction) {
             margin-bottom:10px;
             text-align:center;
         ">
-            🧪 نتيجة الدفع — Sandbox
+            🧪 نتيجة الدفع
         </div>
 
         <div style="
@@ -832,7 +841,7 @@ async function completeSandboxPayment(
 ) {
 
     showResult(
-        "⏳ جارٍ تحديث نتيجة الدفع في Sandbox...",
+        "⏳ جارٍ تحديث نتيجة الدفع...",
         true
     );
 
