@@ -1,5 +1,4 @@
 from backend.merchant_webhook_routes import router as merchant_webhook_router
-from backend.merchant_reports_routes import router as merchant_reports_router
 from starlette.responses import RedirectResponse
 from integration_v2.router import router as integration_v2_router
 """
@@ -19,6 +18,8 @@ from backend.merchant_auth_routes import router as merchant_auth_router
 from app.financial_admin_ui import financial_admin_demo
 from app.merchant_dashboard import create_dashboard
 from security.merchant_session import get_session_merchant, create_session
+from app.reports import get_reports, export_reports_csv
+
 from app.merchant_login import (
     demo as merchant_login_demo,
     LOGIN_UI_CSS,
@@ -132,7 +133,6 @@ async def merchant_dashboard_redirect():
 merchant_dashboard_demo = create_dashboard()
 
 app.include_router(merchant_webhook_router)
-app.include_router(merchant_reports_router)
 
 
 # FADL_PAY_FINANCIAL_ADMIN_AUTH_V1
@@ -182,6 +182,49 @@ gr.mount_gradio_app(
 )
 
 # ============================================================
+
+# MERCHANT REPORTS — READ ONLY
+@app.get("/merchant/reports")
+async def merchant_reports(
+    request: Request,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    status: str | None = None,
+    currency: str | None = None,
+):
+    session_token = request.cookies.get("fadl_merchant_session")
+
+    if not session_token:
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication required",
+        )
+
+    merchant_reference = get_session_merchant(session_token)
+    role = get_session_role(session_token)
+
+    if not merchant_reference:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or expired session",
+        )
+
+    try:
+        return get_reports(
+            merchant_reference=merchant_reference,
+            role=role,
+            start_date=start_date,
+            end_date=end_date,
+            status=status,
+            currency=currency,
+        )
+    except PermissionError as exc:
+        raise HTTPException(
+            status_code=403,
+            detail=str(exc),
+        )
+
+
 # MERCHANT LOGIN UI
 # /merchant
 #

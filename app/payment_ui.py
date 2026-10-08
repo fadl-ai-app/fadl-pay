@@ -788,10 +788,23 @@ def submit_payment(
     # merchant_reference داخلي — لا يظهر للمستخدم
     import os
 
-    merchant_reference = os.getenv(
-        "FADL_UI_MERCHANT_REFERENCE",
-        "MER-007FFD589DE34A66A9ACB5063DD61F51"
-    ).strip()
+    # Merchant must come from the authenticated server-side session.
+    # No hard-coded merchant reference is allowed for production payment creation.
+    from security.merchant_session import get_session_merchant
+
+    merchant_reference = None
+
+    try:
+        session_token = getattr(request, "cookies", {}).get(
+            "fadl_merchant_session"
+        )
+        if session_token:
+            merchant_reference = get_session_merchant(session_token)
+    except Exception:
+        merchant_reference = None
+
+    if not merchant_reference:
+        return "❌ جلسة التاجر غير صالحة أو منتهية.".strip()
 
     if not merchant_reference:
         return (
