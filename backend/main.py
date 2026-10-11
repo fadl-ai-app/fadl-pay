@@ -136,41 +136,40 @@ app.include_router(merchant_webhook_router)
 
 
 # FADL_PAY_FINANCIAL_ADMIN_AUTH_V1
-def financial_admin_auth_dependency(
-    request: Request,
-    fadl_merchant_session: str | None = Cookie(default=None),
-):
+def financial_admin_auth_dependency(request: Request):
     """
-    Server-side protection boundary for Financial Admin.
+    Gradio auth_dependency receives a Request directly and must return a user ID or None.
 
-    A valid merchant session is required and the authenticated
-    merchant role must have financial_admin.read permission.
-
-    This dependency does NOT modify the database.
+    Authenticate only from the server-side merchant session cookie.
+    Keep the existing financial_admin.read permission boundary.
     """
+    session_token = request.cookies.get("fadl_merchant_session")
 
-    if not fadl_merchant_session:
-        raise HTTPException(status_code=401, detail="Not authenticated")
+    if not session_token:
+        return None
 
-    merchant_reference = get_session_merchant(fadl_merchant_session)
+    merchant_reference = get_session_merchant(session_token)
 
     if not merchant_reference:
-        raise HTTPException(status_code=401, detail="Invalid or expired session")
+        return None
 
-    # Resolve role from the existing session/RBAC layer.
     from security.merchant_session import get_session_role
     from security.merchant_rbac import require_permission
 
-    role = get_session_role(fadl_merchant_session)
+    role = get_session_role(session_token)
+
+    if not role:
+        return None
 
     try:
         require_permission(role, "financial_admin.read")
     except Exception:
-        raise HTTPException(status_code=403, detail="Financial Admin permission required")
+        return None
 
     request.state.merchant_reference = merchant_reference
     request.state.merchant_role = role
 
+    # Gradio uses this returned string as the authenticated user identifier.
     return merchant_reference
 
 
