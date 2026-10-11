@@ -90,6 +90,22 @@ def clear_transaction_search():
 
 with gr.Blocks(title="FADL PAY — الإدارة المالية") as financial_admin_demo:
 
+    gr.HTML(
+        """
+        <div dir="rtl" style="margin: 0 0 16px; text-align: right;">
+          <a href="/merchant/dashboard/"
+             style="display:inline-flex; align-items:center; gap:8px;
+                    padding:10px 16px; border-radius:12px;
+                    background:#e9f4ef; color:#0b6042;
+                    border:1px solid #cfe3d9;
+                    font-family:Tahoma,Arial,sans-serif;
+                    font-weight:700; text-decoration:none;">
+            ↩ العودة إلى لوحة التاجر
+          </a>
+        </div>
+        """
+    )
+
     gr.Markdown("# 💰 FADL PAY — الإدارة المالية")
 
     refresh = gr.Button("🔄 تحديث البيانات", variant="primary")
